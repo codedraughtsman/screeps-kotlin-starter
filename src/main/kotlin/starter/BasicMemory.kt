@@ -27,7 +27,8 @@ var PowerCreepMemory.test : Int by memory { 0 }
 var FlagMemory.test : Int by memory { 0 }
 
 /* room.memory */
-var RoomMemory.test : Int by memory { 0 }
+var RoomMemory.heatmap : HeatMap by memory<HeatMap> { HeatMap(Game.spawns.values.first().room) }
+var RoomMemory.map: Array<IntArray> by memory { Array(50, {IntArray(50)}) }
 
 /* spawn.memory */
 var SpawnMemory.test : Int by memory { 0 }

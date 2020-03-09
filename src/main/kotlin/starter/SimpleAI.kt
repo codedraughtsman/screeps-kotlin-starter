@@ -16,6 +16,10 @@ fun gameLoop() {
 	//make sure we have at least some creeps
 	spawnCreeps(Game.creeps.values, mainSpawn)
 
+	for ((_,room) in Game.rooms) {
+		room.memory.heatmap.updateRoom()
+	}
+
 	// build a few extensions so we can have 550 energy
 	val controller = mainSpawn.room.controller
 	if (controller != null && controller.level >= 2) {
