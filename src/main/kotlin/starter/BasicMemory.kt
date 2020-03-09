@@ -2,6 +2,24 @@ package starter
 
 import screeps.api.*
 import screeps.utils.memory.memory
+import screeps.utils.unsafe.jsObject
+
+
+ external interface Person {
+	var name: String?
+	var age: Int // non nullable type here is dangerous because we could forget initialization
+}
+
+ external interface Kangaroo {
+	var belly: Person?
+	var name: String
+	var friends: Array<Person>?
+}
+
+external interface Heatmap {
+	var map: Array<IntArray>
+
+}
 
 /* Add the variables that you want to store to the persistent memory for each object type.
 * They can be accessed by using the .memory attribute of any of the instances of that class
@@ -27,8 +45,23 @@ var PowerCreepMemory.test : Int by memory { 0 }
 var FlagMemory.test : Int by memory { 0 }
 
 /* room.memory */
-var RoomMemory.heatmap : HeatMap by memory<HeatMap> { HeatMap(Game.spawns.values.first().room) }
-var RoomMemory.map: Array<IntArray> by memory { Array(50, {IntArray(50)}) }
+var RoomMemory.heat : Heatmap by memory { jsObject<Heatmap> {map = Array(50, {IntArray(50) {0} }) } }
+var RoomMemory.heatmap: Array<IntArray> by memory { jsObject<Array<IntArray>> {  }}
+var RoomMemory.heatmapSortedPositions: MutableList<Pair<Int, RoomPosition>> by memory {arrayListOf<Pair<Int, RoomPosition>>()}
+var RoomMemory.heatmapIsDirty : Boolean by memory { true }
+var RoomMemory.arr : IntArray by memory { IntArray(50) { 0} }
+var RoomMemory.person : Person by memory {
+	jsObject<Person> {
+		name = "Max Muster"
+		age = 53
+	}
+}
+var RoomMemory.kangaroo: Kangaroo by memory {
+	jsObject<Kangaroo> {
+		name = "Kang"
+	}
+}
+
 
 /* spawn.memory */
 var SpawnMemory.test : Int by memory { 0 }

@@ -66,9 +66,14 @@ fun Creep.build(assignedRoom: Room = this.room) {
 				moveTo(targets[0].pos)
 			}
 		} else {
-            val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
-            upgrade(mainSpawn.room.controller!!)
-        }
+			val roadPos = room.getBestRoadLocation()
+			if (roadPos != null) {
+				room.createConstructionSite(roadPos, STRUCTURE_ROAD)
+			} else {
+				val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
+				upgrade(mainSpawn.room.controller!!)
+			}
+		}
 	}
 }
 
@@ -89,7 +94,7 @@ fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
 				moveTo(targets[0].pos)
 			}
 		} else {
-            build()
-        }
+			build()
+		}
 	}
 }

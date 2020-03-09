@@ -17,7 +17,7 @@ fun gameLoop() {
 	spawnCreeps(Game.creeps.values, mainSpawn)
 
 	for ((_,room) in Game.rooms) {
-		room.memory.heatmap.updateRoom()
+		room.updateRoom()
 	}
 
 	// build a few extensions so we can have 550 energy
@@ -69,7 +69,7 @@ private fun spawnCreeps(
 	}
 
 	val role: Role = when {
-		creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
+		creeps.count { it.memory.role == Role.HARVESTER } < 4 -> Role.HARVESTER
 
 		creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
 
