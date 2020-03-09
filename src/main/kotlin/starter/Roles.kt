@@ -2,6 +2,7 @@ package starter
 
 import screeps.api.*
 import screeps.api.structures.StructureController
+import screeps.api.structures.StructureSpawn
 
 
 enum class Role {
@@ -64,7 +65,10 @@ fun Creep.build(assignedRoom: Room = this.room) {
 			if (build(targets[0]) == ERR_NOT_IN_RANGE) {
 				moveTo(targets[0].pos)
 			}
-		}
+		} else {
+            val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
+            upgrade(mainSpawn.room.controller!!)
+        }
 	}
 }
 
@@ -84,6 +88,8 @@ fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
 			if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
 				moveTo(targets[0].pos)
 			}
-		}
+		} else {
+            build()
+        }
 	}
 }
