@@ -59,7 +59,7 @@ fun gameLoop() {
             Role.HARVESTER -> creep.harvest()
             Role.BUILDER -> creep.build()
             Role.UPGRADER -> creep.upgrade(mainSpawn.room.controller!!)
-            else -> creep.pause()
+
         }
     }
 

@@ -8,9 +8,9 @@ import screeps.utils.memory.memory
 * i.e. creep.memory.building = true */
 
 /* Creep.memory */
-var CreepMemory.building: Boolean by memory { false }
 var CreepMemory.pause: Int by memory { 0 }
 var CreepMemory.role by memory(Role.UNASSIGNED)
+var CreepMemory.isCollectingEnergy : Boolean by memory { false }
 
 
 /* Rest of the persistent memory structures.
