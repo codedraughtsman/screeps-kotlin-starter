@@ -7,6 +7,7 @@ import screeps.api.Room
 import screeps.api.RoomPosition
 import screeps.api.STRUCTURE_EXTENSION
 import screeps.api.STRUCTURE_ROAD
+import kotlin.math.max
 
 
 fun Room.addValueToLocation(pos: RoomPosition, value: Int) {
@@ -14,6 +15,16 @@ fun Room.addValueToLocation(pos: RoomPosition, value: Int) {
 }
 
 fun Room.updateRoom() {
+	memory.heat.ticksSinceLastClear +=1
+	if (memory.heat.ticksSinceLastClear > 200) {
+		console.log("clearing tick counter for heatmap in room: $name")
+		memory.heat.ticksSinceLastClear =0
+		for (x in 0..49) {
+			for (y in 0..49) {
+				memory.heat.map[x][y] = max(memory.heat.map[x][y] -10, 0)
+			}
+		}
+	}
 	for (creep in this.find(FIND_MY_CREEPS)) {
 		if (creep.fatigue > 0) {
 			/*
@@ -71,19 +82,20 @@ private fun Room.getSortedPositions(): MutableList<Pair<Int, RoomPosition>> {
 	//memory.heatmapIsDirty = false
 }
 
-fun Room.getBestRoadLocation(minimumCostValue: Int = 20): RoomPosition? {
+fun Room.getBestRoadLocation(minimumCostValue: Int = 4): RoomPosition? {
 	//if (memory.heatmapIsDirty) {
 	//	updateSortedPositions()
 	//}
 	var sortedPositions = getSortedPositions()
 	console.log(" best road is ${sortedPositions[0]}")
 	for ((value, pos) in sortedPositions) {
-		val noStructureAtLocation = this.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).isNullOrEmpty()
-		if (value > 0) {
-			console.log("structures are ${lookForAt(LOOK_STRUCTURES, pos.x, pos.y)}")
-			console.log("looking at $pos with value of $value has no structure $noStructureAtLocation")
+		if (value < minimumCostValue) {
+			//since the positions are sorted by value there is no point looking any further.
+			return null
 		}
-		if (value > minimumCostValue && noStructureAtLocation) {
+		val noStructureAtLocation = this.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).isNullOrEmpty()
+
+		if ( noStructureAtLocation) {
 			//build a road here
 			console.log("creating road at $pos")
 			createConstructionSite(pos , STRUCTURE_ROAD)

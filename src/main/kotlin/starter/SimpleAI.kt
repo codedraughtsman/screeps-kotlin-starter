@@ -16,13 +16,14 @@ fun gameLoop() {
 	//make sure we have at least some creeps
 	spawnCreeps(Game.creeps.values, mainSpawn)
 
-	for ((_,room) in Game.rooms) {
+	for ((_, room) in Game.rooms) {
 		room.updateRoom()
 	}
 
 	// build a few extensions so we can have 550 energy
 	val controller = mainSpawn.room.controller
 	if (controller != null && controller.level >= 2) {
+		/*
 		when (controller.room.find(FIND_MY_STRUCTURES).count { it.structureType == STRUCTURE_EXTENSION }) {
 			0 -> controller.room.createConstructionSite(29, 27, STRUCTURE_EXTENSION)
 			1 -> controller.room.createConstructionSite(28, 27, STRUCTURE_EXTENSION)
@@ -32,6 +33,8 @@ fun gameLoop() {
 			5 -> controller.room.createConstructionSite(24, 27, STRUCTURE_EXTENSION)
 			6 -> controller.room.createConstructionSite(23, 27, STRUCTURE_EXTENSION)
 		}
+		*/
+
 	}
 
 	for ((_, creep) in Game.creeps) {
@@ -39,9 +42,78 @@ fun gameLoop() {
 			Role.HARVESTER -> creep.harvest()
 			Role.BUILDER -> creep.build()
 			Role.UPGRADER -> creep.upgrade(mainSpawn.room.controller!!)
+			Role.EXTRACTOR -> creep.extractor()
 
 		}
 	}
+
+}
+
+private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {
+	var body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
+	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+	var multiples = spawn.room.energyCapacityAvailable / bodyCost
+
+	var outArray: MutableList<BodyPartConstant> = arrayListOf()
+
+
+	for (i in 1..multiples) {
+		outArray.add(WORK)
+	}
+	for (i in 1..multiples) {
+		outArray.add(CARRY)
+	}
+	for (i in 1..multiples) {
+		outArray.add(MOVE)
+	}
+
+	while (outArray.sumBy { BODYPART_COST[it]!! } < BODYPART_COST[MOVE]!!) {
+		outArray.add(MOVE)
+	}
+	return outArray.toTypedArray()
+
+}
+
+private fun bestWorker2(spawn: StructureSpawn): Array<BodyPartConstant> {
+	var body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
+	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!!) / bodyCost
+
+	var outArray: MutableList<BodyPartConstant> = arrayListOf()
+	outArray.add(MOVE)
+
+	for (i in 1..multiples) {
+		outArray.add(WORK)
+	}
+	for (i in 1..multiples) {
+		outArray.add(CARRY)
+	}
+
+
+	while (outArray.sumBy { BODYPART_COST[it]!! } < BODYPART_COST[MOVE]!!) {
+		outArray.add(MOVE)
+	}
+	return outArray.toTypedArray()
+
+}
+
+private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
+	var body = arrayOf<BodyPartConstant>(WORK)
+	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!! - BODYPART_COST[CARRY]!!) / bodyCost
+
+	var outArray: MutableList<BodyPartConstant> = arrayListOf()
+	outArray.add(MOVE)
+	outArray.add(CARRY)
+
+	for (i in 1..multiples) {
+		outArray.add(WORK)
+	}
+
+	return outArray.toTypedArray()
 
 }
 
@@ -49,34 +121,42 @@ private fun spawnCreeps(
 		creeps: Array<Creep>,
 		spawn: StructureSpawn
 ) {
+	var body: Array<BodyPartConstant> = arrayOf<BodyPartConstant>()
+	var role: Role = Role.UNASSIGNED
+	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
+	console.log("number of flags ${numberOfExtractorFlags} number of extractor creeps: ${creeps.count { it.memory.role == Role.EXTRACTOR }}")
+	if (creeps.count { it.memory.role == Role.HARVESTER } == 0) {
+		body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
+		role = Role.HARVESTER
+	} else if (numberOfExtractorFlags > creeps.count { it.memory.role == Role.EXTRACTOR }) {
+		//need to make an extractor
+		body = bestExtractor(spawn)
+		role = Role.EXTRACTOR
 
-	var body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
+	} else {
+		body = bestWorker(spawn)
+		role = when {
+			creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
 
-	if (spawn.room.energyAvailable >= 550) {
-		body = arrayOf(
-						WORK,
-						WORK,
-						WORK,
-						WORK,
-						CARRY,
-						MOVE,
-						MOVE
-				)
+			creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
+
+			spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
+					creeps.count { it.memory.role == Role.BUILDER } < 3 -> Role.BUILDER
+
+
+			creeps.count { it.memory.role == Role.BUILDER } == 0 -> Role.BUILDER
+
+			else -> return
+		}
 	}
 
-	if (spawn.room.energyAvailable < body.sumBy { BODYPART_COST[it]!! }) {
+
+	if (spawn.room.energyAvailable < body.sumBy { BODYPART_COST[it]!! } && creeps.count { it.memory.role == Role.HARVESTER } > 2) {
 		return
 	}
 
-	val role: Role = when {
-		creeps.count { it.memory.role == Role.HARVESTER } < 4 -> Role.HARVESTER
-
-		creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
-
-		spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
-				creeps.count { it.memory.role == Role.BUILDER } < 2 -> Role.BUILDER
-
-		else -> return
+	if (role == Role.UNASSIGNED || body.isEmpty()) {
+		return
 	}
 
 	val newName = "${role.name}_${Game.time}"

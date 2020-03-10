@@ -9,7 +9,8 @@ enum class Role {
 	UNASSIGNED,
 	HARVESTER,
 	BUILDER,
-	UPGRADER
+	UPGRADER,
+	EXTRACTOR
 }
 
 fun Creep.updateIsCollectingEnergy() {
@@ -76,13 +77,33 @@ fun Creep.build(assignedRoom: Room = this.room) {
 		}
 	}
 }
+fun Creep.getEnergy() {
+	
+}
 
 fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
 	updateIsCollectingEnergy()
 	if (isHarvesting()) {
-		val sources = fromRoom.find(FIND_SOURCES)
-		if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-			moveTo(sources[0].pos)
+		val collectors = fromRoom.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
+				//.filter { it.unsafeCast<EnergyContainer>().energy >0 }
+		console.log("containers $collectors")
+		if (collectors.isNotEmpty()) {
+			for (c in collectors) {
+				console.log("c is $c")
+				console.log("energy is ${c.unsafeCast<EnergyContainer>().energy}")
+				if (true ) {
+					console.log("withdraw(c, RESOURCE_ENERGY) code ${withdraw(c, RESOURCE_ENERGY)}")
+					if (withdraw(c, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+						moveTo(c.pos)
+					}
+				}
+				break
+			}
+		} else {
+			val sources = fromRoom.find(FIND_SOURCES)
+			if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
+				moveTo(sources[0].pos)
+			}
 		}
 	} else {
 		val targets = toRoom.find(FIND_MY_STRUCTURES)
@@ -95,6 +116,79 @@ fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
 			}
 		} else {
 			build()
+			/*
+			//TODO first repair the structures that need it.
+			val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
+			upgrade(mainSpawn.room.controller!!)
+
+			 */
 		}
 	}
+}
+
+fun Creep.extractor() {
+	console.log("calling extactor function")
+	val flags = pos.lookFor(LOOK_FLAGS)
+	val flagOnSquare = (flags != null && flags.filter { it.name.startsWith("extractor", true) }.isNotEmpty())
+	console.log("flags on square ${flagOnSquare}")
+	if (flagOnSquare == false) {
+		console.log("found flag with extractor prefix")
+		//move to unocupied flag
+		val flagPositions = room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }
+		//val unoccupiedFlags = flagPositions.filter { it.pos.lookFor(LOOK_CREEPS).filter { it.name.startsWith("Extractor") }.isNotEmpty()}
+
+		for (flag in flagPositions) {
+			val c = flag.pos.lookFor(LOOK_CREEPS)
+
+			val isUnoccupied = c.isNullOrEmpty() || c.filter { it.name.startsWith("EXTRACTOR", true) }.isEmpty()
+			if (isUnoccupied) {
+				moveTo(flag.pos)
+			}
+		}
+	}
+	val targets = pos.findInRange(FIND_MY_CONSTRUCTION_SITES, 3)
+	if (carry.energy > 0 && targets.isNotEmpty()) {
+		if (build(targets[0]) == ERR_NOT_IN_RANGE) {
+			console.log("extractor tried to build ${targets[0]} but was out of range")
+		}
+	}
+
+
+
+	if (carry.energy > 0) {
+		//deposit it
+		val containersInRange = pos.findInRange(FIND_MY_STRUCTURES, 2)
+				.filter { it.structureType == STRUCTURE_CONTAINER }
+				.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+		console.log("from pos $pos")
+		console.log("containersInRange $containersInRange")
+		console.log("all structures in range ${pos.findInRange(FIND_MY_STRUCTURES, 2)
+		}")
+		if (containersInRange.isNotEmpty()) {
+			//depost energy in container
+			console.log("trying to transfer energy to container")
+			transfer(containersInRange[0], RESOURCE_ENERGY)
+		}
+/*
+		val targets = pos.findInRange(FIND_MY_STRUCTURES, 1)
+				.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
+				.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+		if (targets.isNotEmpty()) {
+			transfer(targets[0], RESOURCE_ENERGY)
+		}
+
+ */
+	}
+	if (carry.energy == carryCapacity) {
+
+	}
+	//harvest energy
+	val target = pos.findClosestByPath(FIND_SOURCES_ACTIVE)
+	if (target != null) {
+		console.log("harvesting with extractor")
+		var error = harvest(target)
+		console.log("error code is $error")
+	}
+
+
 }

@@ -17,6 +17,7 @@ import screeps.utils.unsafe.jsObject
 }
 
 external interface Heatmap {
+	var ticksSinceLastClear: Int
 	var map: Array<IntArray>
 
 }
