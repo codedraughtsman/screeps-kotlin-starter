@@ -30,10 +30,8 @@ fun Creep.isHarvesting(): Boolean {
 fun Creep.upgrade(controller: StructureController) {
 	updateIsCollectingEnergy()
 	if (isHarvesting()) {
-		val sources = room.find(FIND_SOURCES)
-		if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-			moveTo(sources[0].pos)
-		}
+		getEnergy()
+
 	} else {
 		if (upgradeController(controller) == ERR_NOT_IN_RANGE) {
 			moveTo(controller.pos)
@@ -56,10 +54,8 @@ fun Creep.build(assignedRoom: Room = this.room) {
 	updateIsCollectingEnergy()
 
 	if (isHarvesting()) {
-		val sources = room.find(FIND_SOURCES)
-		if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-			moveTo(sources[0].pos)
-		}
+		getEnergy()
+
 	} else {
 		val targets = assignedRoom.find(FIND_MY_CONSTRUCTION_SITES)
 		if (targets.isNotEmpty()) {
@@ -77,53 +73,56 @@ fun Creep.build(assignedRoom: Room = this.room) {
 		}
 	}
 }
-fun Creep.getEnergy() {
-	
+
+fun Creep.getEnergy(fromRoom: Room = this.room, toRoom: Room = this.room) {
+	val collectors = fromRoom.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
+	//.filter { it.unsafeCast<EnergyContainer>().energy >0 }
+	console.log("containers $collectors")
+	if (collectors.isNotEmpty()) {
+		for (c in collectors) {
+			console.log("c is $c")
+			console.log("energy is ${c.unsafeCast<EnergyContainer>().energy}")
+			if (true) {
+				console.log("withdraw(c, RESOURCE_ENERGY) code ${withdraw(c, RESOURCE_ENERGY)}")
+				if (withdraw(c, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+					moveTo(c.pos)
+				}
+			}
+			break
+		}
+	} else {
+		val sources = fromRoom.find(FIND_SOURCES)
+		if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
+			moveTo(sources[0].pos)
+		}
+	}
 }
 
 fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
 	updateIsCollectingEnergy()
 	if (isHarvesting()) {
-		val collectors = fromRoom.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
-				//.filter { it.unsafeCast<EnergyContainer>().energy >0 }
-		console.log("containers $collectors")
-		if (collectors.isNotEmpty()) {
-			for (c in collectors) {
-				console.log("c is $c")
-				console.log("energy is ${c.unsafeCast<EnergyContainer>().energy}")
-				if (true ) {
-					console.log("withdraw(c, RESOURCE_ENERGY) code ${withdraw(c, RESOURCE_ENERGY)}")
-					if (withdraw(c, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-						moveTo(c.pos)
-					}
-				}
-				break
-			}
-		} else {
-			val sources = fromRoom.find(FIND_SOURCES)
-			if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-				moveTo(sources[0].pos)
-			}
+		getEnergy()
+		return
+	}
+
+	val targets = toRoom.find(FIND_MY_STRUCTURES)
+			.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
+			.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+
+	if (targets.isNotEmpty()) {
+		if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+			moveTo(targets[0].pos)
 		}
 	} else {
-		val targets = toRoom.find(FIND_MY_STRUCTURES)
-				.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
-				.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+		build()
+		/*
+		//TODO first repair the structures that need it.
+		val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
+		upgrade(mainSpawn.room.controller!!)
 
-		if (targets.isNotEmpty()) {
-			if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-				moveTo(targets[0].pos)
-			}
-		} else {
-			build()
-			/*
-			//TODO first repair the structures that need it.
-			val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
-			upgrade(mainSpawn.room.controller!!)
-
-			 */
-		}
+		 */
 	}
+
 }
 
 fun Creep.extractor() {
