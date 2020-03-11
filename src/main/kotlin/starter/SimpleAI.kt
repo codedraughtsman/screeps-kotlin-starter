@@ -38,13 +38,7 @@ fun gameLoop() {
 	}
 
 	for ((_, creep) in Game.creeps) {
-		when (creep.memory.role) {
-			Role.HARVESTER -> creep.harvest()
-			Role.BUILDER -> creep.build()
-			Role.UPGRADER -> creep.upgrade(mainSpawn.room.controller!!)
-			Role.EXTRACTOR -> creep.extractor()
-
-		}
+		creep.runBehaviour()
 	}
 
 }
@@ -54,6 +48,9 @@ private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {
 	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
 	var multiples = spawn.room.energyCapacityAvailable / bodyCost
+
+	console.log("bodyCost $bodyCost, multiples $multiples")
+
 
 	var outArray: MutableList<BodyPartConstant> = arrayListOf()
 
@@ -103,6 +100,7 @@ private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
 	var body = arrayOf<BodyPartConstant>(WORK)
 	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
+
 	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!! - BODYPART_COST[CARRY]!!) / bodyCost
 
 	var outArray: MutableList<BodyPartConstant> = arrayListOf()
@@ -111,6 +109,23 @@ private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
 
 	for (i in 1..multiples) {
 		outArray.add(WORK)
+	}
+
+	return outArray.toTypedArray()
+}
+private fun bestHauler(spawn: StructureSpawn): Array<BodyPartConstant> {
+	var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
+	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+
+	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[WORK]!!) / bodyCost
+
+	var outArray: MutableList<BodyPartConstant> = arrayListOf()
+	outArray.add(WORK)
+
+	for (i in 1..multiples) {
+		outArray.add(CARRY)
+		outArray.add(MOVE)
 	}
 
 	return outArray.toTypedArray()
@@ -124,7 +139,7 @@ private fun spawnCreeps(
 	var body: Array<BodyPartConstant> = arrayOf<BodyPartConstant>()
 	var role: Role = Role.UNASSIGNED
 	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
-	console.log("number of flags ${numberOfExtractorFlags} number of extractor creeps: ${creeps.count { it.memory.role == Role.EXTRACTOR }}")
+	val numberOfHaulerFlags =  spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("hauler", true) }.count()
 	if (creeps.count { it.memory.role == Role.HARVESTER } == 0) {
 		body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
 		role = Role.HARVESTER
@@ -133,19 +148,24 @@ private fun spawnCreeps(
 		body = bestExtractor(spawn)
 		role = Role.EXTRACTOR
 
+	} else if (numberOfHaulerFlags > creeps.count { it.memory.role == Role.HAULER }) {
+		//need to make an extractor
+		body = bestHauler(spawn)
+		role = Role.HAULER
+
 	} else {
 		body = bestWorker(spawn)
 		role = when {
-			creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
+			creeps.count { it.memory.role == Role.HARVESTER } < spawn.room.memory.maxWorkers-> Role.HARVESTER
 
-			creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
-
+			//creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
+/*
 			spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
-					creeps.count { it.memory.role == Role.BUILDER } < 3 -> Role.BUILDER
+					creeps.count { it.memory.role == Role.BUILDER } < 1 -> Role.BUILDER
 
 
 			creeps.count { it.memory.role == Role.BUILDER } == 0 -> Role.BUILDER
-
+*/
 			else -> return
 		}
 	}

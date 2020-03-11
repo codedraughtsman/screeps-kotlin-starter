@@ -19,6 +19,14 @@ import screeps.utils.unsafe.jsObject
 external interface Heatmap {
 	var ticksSinceLastClear: Int
 	var map: Array<IntArray>
+	var buildRoadLimit: Int
+
+}
+
+external interface BehaviourMemory {
+	var targetPos : RoomPosition?
+	var gotoPos : RoomPosition?
+	var sourcePos : RoomPosition?
 
 }
 
@@ -30,6 +38,7 @@ external interface Heatmap {
 var CreepMemory.pause: Int by memory { 0 }
 var CreepMemory.role by memory(Role.UNASSIGNED)
 var CreepMemory.isCollectingEnergy : Boolean by memory { false }
+var CreepMemory.behaviour : BehaviourMemory by memory { jsObject<starter.BehaviourMemory> {  targetPos =null; sourcePos =null; gotoPos =null} }
 
 
 /* Rest of the persistent memory structures.
@@ -46,10 +55,10 @@ var PowerCreepMemory.test : Int by memory { 0 }
 var FlagMemory.test : Int by memory { 0 }
 
 /* room.memory */
-var RoomMemory.heat : Heatmap by memory { jsObject<Heatmap> {map = Array(50, {IntArray(50) {0} }) } }
+var RoomMemory.heat : Heatmap by memory { jsObject<Heatmap> {map = Array(50, {IntArray(50) {0} }) ; buildRoadLimit = 10} }
 var RoomMemory.heatmap: Array<IntArray> by memory { jsObject<Array<IntArray>> {  }}
 var RoomMemory.heatmapSortedPositions: MutableList<Pair<Int, RoomPosition>> by memory {arrayListOf<Pair<Int, RoomPosition>>()}
-var RoomMemory.heatmapIsDirty : Boolean by memory { true }
+var RoomMemory.maxWorkers : Int by memory { 3 }
 var RoomMemory.arr : IntArray by memory { IntArray(50) { 0} }
 var RoomMemory.person : Person by memory {
 	jsObject<Person> {

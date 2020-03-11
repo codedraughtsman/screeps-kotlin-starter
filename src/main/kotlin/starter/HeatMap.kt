@@ -16,7 +16,7 @@ fun Room.addValueToLocation(pos: RoomPosition, value: Int) {
 
 fun Room.updateRoom() {
 	memory.heat.ticksSinceLastClear +=1
-	if (memory.heat.ticksSinceLastClear > 200) {
+	if (memory.heat.ticksSinceLastClear > 400) {
 		console.log("clearing tick counter for heatmap in room: $name")
 		memory.heat.ticksSinceLastClear =0
 		for (x in 0..49) {
@@ -47,7 +47,14 @@ fun Room.updateRoom() {
 
 
 			memory.heat.map[creep.pos.x][creep.pos.y] += 1
-			console.log( "value at ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
+//			if (memory.heat.map[creep.pos.x][creep.pos.y] > memory.heat.buildRoadLimit){
+			if (memory.heat.map[creep.pos.x][creep.pos.y] > 10){
+
+				createConstructionSite(creep.pos, STRUCTURE_ROAD)
+				console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
+
+			}
+			console.log("heatmap at ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
 		}
 	}
 	//memory.heatmapIsDirty = true
