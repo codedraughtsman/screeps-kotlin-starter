@@ -14,7 +14,8 @@ enum class Behavours {
 	BUILD,
 	UPGRADE,
 	EXTRACT,
-	HAULER_PICKUP
+	HAULER_PICKUP,
+	STORE_ENERGY
 }
 
 fun Creep.runBehaviour() {
@@ -51,11 +52,11 @@ fun Creep.globalBehavour() {
 fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	var out: MutableList<Behavours> = arrayListOf()
 	when (role) {
-		Role.HARVESTER -> out = arrayListOf(Behavours.PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
+		Role.HARVESTER -> out = arrayListOf(Behavours.PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.STORE_ENERGY, Behavours.UPGRADE)
 		Role.BUILDER -> out = arrayListOf(Behavours.GOTO, Behavours.PICKUP, Behavours.BUILD, Behavours.DEPOSIT, Behavours.UPGRADE)
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
 		Role.EXTRACTOR -> out = arrayListOf(Behavours.EXTRACT) //TODO static build and upgrade
-		Role.HAULER -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
+		Role.HAULER -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.STORE_ENERGY, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
 	}
 	return out
 }
@@ -70,6 +71,8 @@ private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
 		Behavours.UPGRADE -> isFinished = upgrade(room.controller!!)
 		Behavours.EXTRACT -> isFinished = extractor()
 		Behavours.HAULER_PICKUP -> isFinished = behaviourHaulerPickup()
+		Behavours.STORE_ENERGY -> isFinished = behaviourStore()
+
 	}
 	return isFinished
 }
@@ -177,14 +180,16 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 	if (!isHarvesting()) {
 		return false
 	}
-	var haulerFlags =  room.find(FIND_FLAGS).filter { it.name.startsWith("hauler", true) }
-	if (haulerFlags.isNullOrEmpty()){
+	var haulerFlags = room.find(FIND_FLAGS).filter { it.name.startsWith("hauler", true) }
+	if (haulerFlags.isNullOrEmpty()) {
 		return false
 	}
 	for (flag in haulerFlags) {
-		if (Game.creeps.values.count { it.memory.role == Role.HAULER && it.memory.behaviour.sourcePos != null
-						&& it.memory.behaviour.sourcePos!!.x  == flag.pos.x
-						&&  it.memory.behaviour.sourcePos!!.y  == flag.pos.y} == 0){
+		if (Game.creeps.values.count {
+					it.memory.role == Role.HAULER && it.memory.behaviour.sourcePos != null
+							&& it.memory.behaviour.sourcePos!!.x == flag.pos.x
+							&& it.memory.behaviour.sourcePos!!.y == flag.pos.y
+				} == 0) {
 			memory.behaviour.sourcePos = flag.pos
 			break
 		}
@@ -200,10 +205,10 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 	if (memory.behaviour.targetPos != null) {
 		//memory.behaviour.targetPos = room.getPositionAt( memory.behaviour.targetPos!!.x-1, memory.behaviour.targetPos!!.y)
 
-		if ( pickupEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+		if (pickupEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
 			//go and harvest this pos
 			console.log("HaulerPickup out of range of pickup, moving to ${memory.behaviour.targetPos!!}")
-			moveTo(memory.behaviour.targetPos!!.x,memory.behaviour.targetPos!!.y )
+			moveTo(memory.behaviour.targetPos!!.x, memory.behaviour.targetPos!!.y)
 			return true
 		} else {
 			//success
@@ -241,13 +246,13 @@ fun Creep.behaviourDeposit(): Boolean {
 			//val target = targets[0]
 			val path = PathFinder.search(pos, target.pos)
 			val cost: Int = path.cost
-			console.log(" looking at path from $pos to ${target.pos} cost $cost")
+			//console.log(" looking at path from $pos to ${target.pos} cost $cost")
 			if (bestCost == null || cost < bestCost) {
 				bestCost = cost
 				bestPos = target.pos
 			}
 		}
-		console.log("best path for depost is from: $pos to $bestPos cost $bestCost")
+		//console.log("best path for depost is from: $pos to $bestPos cost $bestCost")
 
 		memory.behaviour.targetPos = bestPos
 		if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
@@ -256,10 +261,47 @@ fun Creep.behaviourDeposit(): Boolean {
 			return true
 		}
 	} else {
-		console.log("dropBehavour could not find anything")
+		//console.log("dropBehavour could not find anything")
 	}
 	return false
 }
+
+fun Creep.behaviourStore(): Boolean {
+	//find the closest place to deposit energy in
+
+	var targets = room.find(FIND_MY_STRUCTURES)
+			.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
+	//console.log("not storage filtering ${targets}")
+	targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
+	//console.log("after storage filtering ${targets}")
+
+	if (targets.isNotEmpty()) {
+		var bestPos = targets[0].pos
+		var bestCost: Int? = null
+		for (target in targets) {
+			//val target = targets[0]
+			val path = PathFinder.search(pos, target.pos)
+			val cost: Int = path.cost
+			console.log(" looking at path from $pos to ${target.pos} cost $cost")
+			if (bestCost == null || cost < bestCost) {
+				bestCost = cost
+				bestPos = target.pos
+			}
+		}
+		console.log("best path for store is from: $pos to $bestPos cost $bestCost")
+
+		memory.behaviour.targetPos = bestPos
+		if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+			//memory.behaviour.gotoPos =memory.behaviour.targetPos
+			moveTo(bestPos)
+			return true
+		}
+	} else {
+		console.log("storBehavour could not find anything, no targets")
+	}
+	return false
+}
+
 
 private fun Creep.getClosestStructureToBuild(): ConstructionSite? {
 	return pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
