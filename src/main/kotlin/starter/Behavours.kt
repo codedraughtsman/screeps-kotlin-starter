@@ -52,7 +52,7 @@ fun Creep.globalBehavour() {
 fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	var out: MutableList<Behavours> = arrayListOf()
 	when (role) {
-		Role.HARVESTER -> out = arrayListOf(Behavours.PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.STORE_ENERGY, Behavours.UPGRADE)
+		Role.HARVESTER -> out = arrayListOf(Behavours.PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
 		Role.BUILDER -> out = arrayListOf(Behavours.GOTO, Behavours.PICKUP, Behavours.BUILD, Behavours.DEPOSIT, Behavours.UPGRADE)
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
 		Role.EXTRACTOR -> out = arrayListOf(Behavours.EXTRACT) //TODO static build and upgrade
@@ -110,7 +110,7 @@ fun Creep.pickupEnergy(targetPos: RoomPosition): ScreepsReturnCode {
 	}
 	val structures = newPos?.findInRange(FIND_MY_STRUCTURES, 1)
 	if (!structures.isNullOrEmpty()) {
-		val containers = structures?.filter { it.structureType == STRUCTURE_CONTAINER }
+		val containers = structures?.filter { it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE }
 		if (containers.isNotEmpty()) {
 			return withdraw(containers[0], RESOURCE_ENERGY)
 		}
@@ -129,6 +129,21 @@ fun Creep.getClosestSourceOfEnergy(): RoomPosition? {
 	var bestLocation: RoomPosition? = null
 	var bestDistance: Int? = null
 	//val collectors = room.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
+
+	var targets = room.find(FIND_MY_STRUCTURES)
+			.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
+	//console.log("not storage filtering ${targets}")
+	targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
+	for (target in targets){
+		val distance = PathFinder.search(pos, target.pos).cost
+		if (bestDistance == null || distance < bestDistance) {
+			bestLocation = target.pos
+			bestDistance = distance
+		}
+	}
+
+
+
 	val collectors = room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", ignoreCase = true) }
 	if (room.find(FIND_MY_CREEPS).count { it.memory.role == Role.EXTRACTOR } > 0 && collectors.isNotEmpty()) {
 		for (c in collectors) {

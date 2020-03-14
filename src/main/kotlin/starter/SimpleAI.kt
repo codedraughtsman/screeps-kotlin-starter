@@ -6,6 +6,7 @@ import screeps.api.structures.StructureSpawn
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
+import kotlin.math.min
 
 fun gameLoop() {
 	val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -65,36 +66,14 @@ private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {
 		outArray.add(MOVE)
 	}
 
-	while (outArray.sumBy { BODYPART_COST[it]!! } < BODYPART_COST[MOVE]!!) {
+	while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable) {
 		outArray.add(MOVE)
 	}
 	return outArray.toTypedArray()
 
 }
 
-private fun bestWorker2(spawn: StructureSpawn): Array<BodyPartConstant> {
-	var body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
-	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
-	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!!) / bodyCost
-
-	var outArray: MutableList<BodyPartConstant> = arrayListOf()
-	outArray.add(MOVE)
-
-	for (i in 1..multiples) {
-		outArray.add(WORK)
-	}
-	for (i in 1..multiples) {
-		outArray.add(CARRY)
-	}
-
-
-	while (outArray.sumBy { BODYPART_COST[it]!! } < BODYPART_COST[MOVE]!!) {
-		outArray.add(MOVE)
-	}
-	return outArray.toTypedArray()
-
-}
 
 private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
 	var body = arrayOf<BodyPartConstant>(WORK)
@@ -103,6 +82,8 @@ private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
 
 	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!! - BODYPART_COST[CARRY]!!) / bodyCost
 
+	multiples = min(6,multiples)
+
 	var outArray: MutableList<BodyPartConstant> = arrayListOf()
 	outArray.add(MOVE)
 	outArray.add(CARRY)
@@ -110,11 +91,16 @@ private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
 	for (i in 1..multiples) {
 		outArray.add(WORK)
 	}
-
+	while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable) {
+		outArray.add(MOVE)
+	}
 	return outArray.toTypedArray()
 }
-private fun bestHauler(spawn: StructureSpawn): Array<BodyPartConstant> {
+private fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
 	var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
+	if (road) {
+		body = arrayOf<BodyPartConstant>(CARRY, CARRY, MOVE)
+	}
 	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
 
