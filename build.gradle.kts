@@ -11,12 +11,14 @@ plugins {
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
     implementation("ch.delconte.screeps-kotlin:screeps-kotlin-types:1.3.0")
     implementation(kotlin("stdlib-js"))
     testImplementation(kotlin("test-js"))
+    implementation( "com.beust:klaxon:5.2")
 }
 
 val screepsUser: String? by project

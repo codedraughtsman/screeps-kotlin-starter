@@ -179,7 +179,7 @@ fun Creep.behaviourPickup(): Boolean {
 	}
 	memory.behaviour.targetPos = getClosestSourceOfEnergy()
 
-	console.log("behavourPickup: from $pos to closest source of energy ${memory.behaviour.targetPos}")
+//	console.log("behavourPickup: from $pos to closest source of energy ${memory.behaviour.targetPos}")
 	//try to harvest location
 	if (memory.behaviour.targetPos != null) {
 		//memory.behaviour.targetPos = room.getPositionAt( memory.behaviour.targetPos!!.x-1, memory.behaviour.targetPos!!.y)
@@ -297,7 +297,7 @@ fun Creep.behaviourStore(): Boolean {
 
 	//console.log("not storage filtering ${targets}")
 	targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
-	console.log("after storage filtering ${targets}")
+//	console.log("after storage filtering ${targets}")
 
 
 	if (targets.isNotEmpty()) {
@@ -307,13 +307,13 @@ fun Creep.behaviourStore(): Boolean {
 			//val target = targets[0]
 			val path = PathFinder.search(pos, target.pos)
 			val cost: Int = path.cost
-			console.log(" looking at path from $pos to ${target.pos} cost $cost")
+//			console.log(" looking at path from $pos to ${target.pos} cost $cost")
 			if (bestCost == null || cost < bestCost) {
 				bestCost = cost
 				bestPos = target.pos
 			}
 		}
-		console.log("best path for store is from: $pos to $bestPos cost $bestCost")
+//		console.log("best path for store is from: $pos to $bestPos cost $bestCost")
 
 		memory.behaviour.targetPos = bestPos
 		if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {

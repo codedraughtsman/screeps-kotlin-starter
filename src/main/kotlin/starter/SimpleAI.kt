@@ -42,8 +42,7 @@ fun gameLoop() {
 	}
 
 	for ((_, room) in Game.rooms) {
-		room.initLayout()
-		room.updateRoom()
+		room.update()
 	}
 }
 
@@ -53,7 +52,7 @@ private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {
 
 	var multiples = spawn.room.energyCapacityAvailable / bodyCost
 
-	console.log("bodyCost $bodyCost, multiples $multiples")
+//	console.log("bodyCost $bodyCost, multiples $multiples")
 
 
 	var outArray: MutableList<BodyPartConstant> = arrayListOf()

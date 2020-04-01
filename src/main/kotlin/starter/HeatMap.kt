@@ -14,7 +14,7 @@ fun Room.addValueToLocation(pos: RoomPosition, value: Int) {
 	memory.heatmap[pos.x][pos.y] += value
 }
 
-fun Room.updateRoom() {
+fun Room.updateHeatmap() {
 	memory.heat.ticksSinceLastClear +=1
 	if (memory.heat.ticksSinceLastClear > 400) {
 		console.log("clearing tick counter for heatmap in room: $name")
@@ -54,7 +54,6 @@ fun Room.updateRoom() {
 				console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
 
 			}
-			console.log("heatmap at ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
 		}
 	}
 	//memory.heatmapIsDirty = true
