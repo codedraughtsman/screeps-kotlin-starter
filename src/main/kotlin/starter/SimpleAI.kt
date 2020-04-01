@@ -14,12 +14,11 @@ fun gameLoop() {
 	//delete memories of creeps that have passed away
 	houseKeeping(Game.creeps)
 
+
 	//make sure we have at least some creeps
 	spawnCreeps(Game.creeps.values, mainSpawn)
 
-	for ((_, room) in Game.rooms) {
-		room.updateRoom()
-	}
+
 
 	// build a few extensions so we can have 550 energy
 	val controller = mainSpawn.room.controller
@@ -42,6 +41,10 @@ fun gameLoop() {
 		creep.runBehaviour()
 	}
 
+	for ((_, room) in Game.rooms) {
+		room.initLayout()
+		room.updateRoom()
+	}
 }
 
 private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {

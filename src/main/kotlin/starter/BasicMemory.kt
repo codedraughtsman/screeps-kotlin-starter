@@ -29,6 +29,12 @@ external interface BehaviourMemory {
 	var sourcePos : RoomPosition?
 
 }
+external interface InfluenceMapsMemory {
+	var distanceToSources : Array<Array<IntArray>>
+	var distanceToController : Array<IntArray>
+
+
+}
 
 /* Add the variables that you want to store to the persistent memory for each object type.
 * They can be accessed by using the .memory attribute of any of the instances of that class
@@ -59,13 +65,17 @@ var RoomMemory.heat : Heatmap by memory { jsObject<Heatmap> {map = Array(50, {In
 var RoomMemory.heatmap: Array<IntArray> by memory { jsObject<Array<IntArray>> {  }}
 var RoomMemory.heatmapSortedPositions: MutableList<Pair<Int, RoomPosition>> by memory {arrayListOf<Pair<Int, RoomPosition>>()}
 var RoomMemory.maxWorkers : Int by memory { 3 }
-var RoomMemory.arr : IntArray by memory { IntArray(50) { 0} }
-var RoomMemory.person : Person by memory {
-	jsObject<Person> {
-		name = "Max Muster"
-		age = 53
-	}
-}
+var RoomMemory.minControlLevelBeforeBuildingRoads: Int by memory { 3 }
+var RoomMemory.mainStore : String by memory { "" }
+var RoomMemory.layoutHasBeenGenerated : Boolean by memory { false }
+var RoomMemory.isRoomInited : Boolean by memory {false}
+var RoomMemory.influenceMaps : InfluenceMapsMemory by memory { jsObject<InfluenceMapsMemory> {} }
+//var screeps.api.RoomMemory.influenceMaps : InfluenceMapsMemory by memory { jsObject<InfluenceMapsMemory> {distanceToSources = Array<Array<IntArray>>() }}
+
+
+
+
+
 var RoomMemory.kangaroo: Kangaroo by memory {
 	jsObject<Kangaroo> {
 		name = "Kang"

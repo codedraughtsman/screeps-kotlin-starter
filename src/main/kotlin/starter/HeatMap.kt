@@ -48,7 +48,7 @@ fun Room.updateRoom() {
 
 			memory.heat.map[creep.pos.x][creep.pos.y] += 1
 //			if (memory.heat.map[creep.pos.x][creep.pos.y] > memory.heat.buildRoadLimit){
-			if (memory.heat.map[creep.pos.x][creep.pos.y] > 10){
+			if (controller != null && controller!!.level >= memory.minControlLevelBeforeBuildingRoads && memory.heat.map[creep.pos.x][creep.pos.y] > 10){
 
 				createConstructionSite(creep.pos, STRUCTURE_ROAD)
 				console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")

@@ -15,7 +15,8 @@ enum class Behavours {
 	UPGRADE,
 	EXTRACT,
 	HAULER_PICKUP,
-	STORE_ENERGY
+	STORE_ENERGY,
+	BUILD_CONTAINER
 }
 
 fun Creep.runBehaviour() {
@@ -55,7 +56,7 @@ fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 		Role.HARVESTER -> out = arrayListOf(Behavours.PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
 		Role.BUILDER -> out = arrayListOf(Behavours.GOTO, Behavours.PICKUP, Behavours.BUILD, Behavours.DEPOSIT, Behavours.UPGRADE)
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
-		Role.EXTRACTOR -> out = arrayListOf(Behavours.EXTRACT) //TODO static build and upgrade
+		Role.EXTRACTOR -> out = arrayListOf(Behavours.BUILD_CONTAINER,Behavours.EXTRACT) //TODO static build and upgrade
 		Role.HAULER -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.STORE_ENERGY, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
 	}
 	return out
@@ -72,6 +73,7 @@ private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
 		Behavours.EXTRACT -> isFinished = extractor()
 		Behavours.HAULER_PICKUP -> isFinished = behaviourHaulerPickup()
 		Behavours.STORE_ENERGY -> isFinished = behaviourStore()
+		Behavours.BUILD_CONTAINER -> isFinished = behaviourBuildContainer()
 
 	}
 	return isFinished
@@ -121,45 +123,50 @@ fun Creep.pickupEnergy(targetPos: RoomPosition): ScreepsReturnCode {
 
 fun Creep.getClosestSourceOfEnergy(): RoomPosition? {
 
-	var source = pos.findClosestByPath(FIND_SOURCES_ACTIVE)
-	//var container = pos.findClosestByPath(FIND_MY_STRUCTURES, jsObject { i} )
-	//TODO fix this to use containers
+	if (room.controller!!.level > 2) {
+		//var container = pos.findClosestByPath(FIND_MY_STRUCTURES, jsObject { i} )
+		//TODO fix this to use containers
 
 
-	var bestLocation: RoomPosition? = null
-	var bestDistance: Int? = null
-	//val collectors = room.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
+		var bestLocation: RoomPosition? = null
+		var bestDistance: Int? = null
+		//val collectors = room.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
 
-	var targets = room.find(FIND_MY_STRUCTURES)
-			.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
-	//console.log("not storage filtering ${targets}")
-	targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
-	for (target in targets){
-		val distance = PathFinder.search(pos, target.pos).cost
-		if (bestDistance == null || distance < bestDistance) {
-			bestLocation = target.pos
-			bestDistance = distance
-		}
-	}
+		// target prioraty list
+		// storage, then flag with at least one hauler creep on the map, then containers that are not next to a source (extractors ones), then sources.
+
+		var targets = room.find(FIND_MY_STRUCTURES)
+				.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
+		//console.log("not storage filtering ${targets}")
+		targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
 
 
-
-	val collectors = room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", ignoreCase = true) }
-	if (room.find(FIND_MY_CREEPS).count { it.memory.role == Role.EXTRACTOR } > 0 && collectors.isNotEmpty()) {
-		for (c in collectors) {
-			val distance = PathFinder.search(pos, c.pos).cost
+		for (target in targets) {
+			val distance = PathFinder.search(pos, target.pos).cost
 			if (bestDistance == null || distance < bestDistance) {
-				bestLocation = c.pos
+				bestLocation = target.pos
 				bestDistance = distance
 			}
 		}
+
+
+		val collectors = room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", ignoreCase = true) }
+		if (room.find(FIND_MY_CREEPS).count { it.memory.role == Role.EXTRACTOR } > 0 && collectors.isNotEmpty()) {
+			for (c in collectors) {
+				val distance = PathFinder.search(pos, c.pos).cost
+				if (bestDistance == null || distance < bestDistance) {
+					bestLocation = c.pos
+					bestDistance = distance
+				}
+			}
+		}
+
+		if (bestLocation != null) {
+			return bestLocation
+		}
 	}
 
-	if (bestLocation != null) {
-		return bestLocation
-	}
-
-
+	var source = pos.findClosestByPath(FIND_SOURCES_ACTIVE)
 	if (source != null) {
 		return source.pos
 	}
@@ -285,10 +292,13 @@ fun Creep.behaviourStore(): Boolean {
 	//find the closest place to deposit energy in
 
 	var targets = room.find(FIND_MY_STRUCTURES)
-			.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
+//			.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
+			.filter { (it.structureType == STRUCTURE_STORAGE) }
+
 	//console.log("not storage filtering ${targets}")
 	targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
-	//console.log("after storage filtering ${targets}")
+	console.log("after storage filtering ${targets}")
+
 
 	if (targets.isNotEmpty()) {
 		var bestPos = targets[0].pos
@@ -312,6 +322,17 @@ fun Creep.behaviourStore(): Boolean {
 			return true
 		}
 	} else {
+		var targets = room.find(FIND_FLAGS)
+				.filter { (it.name.contains("store", ignoreCase = true))}
+		if (targets.isNotEmpty()) {
+			val bestPos = targets[0].pos
+			memory.behaviour.targetPos = bestPos
+			if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+				//memory.behaviour.gotoPos =memory.behaviour.targetPos
+				moveTo(bestPos)
+				return true
+			}
+		}
 		console.log("storBehavour could not find anything, no targets")
 	}
 	return false
@@ -345,6 +366,27 @@ fun Creep.behaviourBuild(): Boolean {
 	if (build(target!!) == ERR_NOT_IN_RANGE) {
 		moveTo(target.pos)
 		console.log("target $target is not in range, set gotoPos to it")
+		return true
+	} else {
+		return true
+	}
+
+	return false
+}
+
+fun Creep.behaviourBuildContainer(): Boolean {
+	if (carry.energy == 0) {
+		return false
+	}
+	var target = getClosestStructureToBuild()
+
+//	var target = room.lookAt( pos.x, pos.y).filter { (it.type == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE)  }
+	if (target == null || target.pos.x != pos.x || target.pos.y != pos.y) {
+		//nothing to build
+		return false
+	}
+	//memory.behaviour.targetPos = target.pos
+	if (build(target) == ERR_NOT_IN_RANGE) {
 		return true
 	} else {
 		return true
