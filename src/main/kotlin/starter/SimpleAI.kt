@@ -131,17 +131,17 @@ private fun spawnCreeps(
 	if (creeps.count { it.memory.role == Role.HARVESTER } == 0) {
 		body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
 		role = Role.HARVESTER
+	} else if ( creeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER }) {
+		//need to make an extractor
+		body = bestHauler(spawn)
+		role = Role.HAULER
+
 	} else if (numberOfExtractorFlags > creeps.count { it.memory.role == Role.EXTRACTOR }) {
 		//need to make an extractor
 		body = bestExtractor(spawn)
 		role = Role.EXTRACTOR
 
-	} else if (numberOfHaulerFlags > creeps.count { it.memory.role == Role.HAULER }) {
-		//need to make an extractor
-		body = bestHauler(spawn)
-		role = Role.HAULER
-
-	} else {
+	}  else {
 		body = bestWorker(spawn)
 		role = when {
 			creeps.count { it.memory.role == Role.HARVESTER } < spawn.room.memory.maxWorkers-> Role.HARVESTER

@@ -73,6 +73,8 @@ var RoomMemory.minControlLevelBeforeBuildingRoads: Int by memory { 3 }
 var RoomMemory.mainStore : String by memory { "" }
 var RoomMemory.bunker : BunkerMemory by memory { jsObject<BunkerMemory>{mainStoreId= ""; mainStorePos = null} }
 var RoomMemory.layoutRoadsToSourcesHaveBeenGenerated : Boolean by memory { false }
+var RoomMemory.layoutCoreHasBeenGenerated : Boolean by memory { false }
+
 var RoomMemory.layoutCL : Int by memory { 0 }
 var RoomMemory.isRoomInited : Boolean by memory {false}
 var RoomMemory.influenceMaps : InfluenceMapsMemory by memory { jsObject<InfluenceMapsMemory> {} }

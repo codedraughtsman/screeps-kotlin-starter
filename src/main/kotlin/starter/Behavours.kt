@@ -202,7 +202,7 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 	if (!isHarvesting()) {
 		return false
 	}
-	var haulerFlags = room.find(FIND_FLAGS).filter { it.name.startsWith("hauler", true) }
+	var haulerFlags = room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }
 	if (haulerFlags.isNullOrEmpty()) {
 		return false
 	}
@@ -230,7 +230,7 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 		if (pickupEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
 			//go and harvest this pos
 			console.log("HaulerPickup out of range of pickup, moving to ${memory.behaviour.targetPos!!}")
-			moveTo(memory.behaviour.targetPos!!.x, memory.behaviour.targetPos!!.y)
+			moveTo(memory.behaviour.targetPos!!.x, memory.behaviour.targetPos!!.y, opts = MoveToOptions)
 			return true
 		} else {
 			//success
