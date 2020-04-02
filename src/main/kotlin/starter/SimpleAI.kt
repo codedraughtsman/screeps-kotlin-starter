@@ -7,6 +7,7 @@ import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
 import kotlin.math.min
+import starter.behaviours.runBehaviour
 
 fun gameLoop() {
 	val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return

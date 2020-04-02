@@ -137,14 +137,14 @@ private fun Room.LayoutExtensionsLattice() {
 		if (squareIsEmpty(currentPos)) {
 			console.log("square is empty. placing flag at $currentPos")
 			if ((currentPos.y + currentPos.x) % 2 == 0) {
-				createFlag(currentPos.x, currentPos.y, "extension placeholder " + extensionCounter.toString(), COLOR_GREY)
+				createFlag(currentPos.x, currentPos.y, "extension placeholder " + extensionCounter.toString(), COLOR_BROWN)
 				extensionCounter++
 				if (extensionCounter > 80) {
 					console.log("have placed all 80 extensions. exiting ")
 					break
 				}
 			} else {
-				createFlag(currentPos.x, currentPos.y, "road placeholder forExtensions " + roadCounter.toString(), COLOR_BROWN)
+				createFlag(currentPos.x, currentPos.y, "road placeholder forOuterRing " + roadCounter.toString(), COLOR_GREY)
 				roadCounter++
 			}
 		} else {
