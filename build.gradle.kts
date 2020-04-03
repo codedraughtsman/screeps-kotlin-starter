@@ -27,6 +27,7 @@ val screepsToken: String? by project
 val screepsHost: String? by project
 val screepsBranch: String? by project
 val branch = screepsBranch ?: "kotlin-start"
+val branchStable = "kotlinStable"
 val host = screepsHost ?: "https://screeps.com"
 
 fun String.encodeBase64() = Base64.getEncoder().encodeToString(this.toByteArray())
@@ -73,6 +74,36 @@ tasks {
             modules.putAll(jsFiles.associate { it.nameWithoutExtension to it.readText() })
 
             println("uploading ${jsFiles.count()} files to branch $branch on server $host")
+        }
+
+    }
+    register<RestTask>("deployStable") {
+        group = "screeps"
+        dependsOn("build")
+        val modules = mutableMapOf<String, String>()
+        val minifiedCodeLocation = File("$buildDir/kotlin-js-min/main")
+
+        httpMethod = "post"
+        uri = "$host/api/user/code"
+        requestHeaders = if (screepsToken != null)
+            mapOf("X-Token" to screepsToken)
+        else
+            mapOf("Authorization" to "Basic " + "$screepsUser:$screepsPassword".encodeBase64())
+        contentType = groovyx.net.http.ContentType.JSON
+        requestBody = mapOf("branch" to branchStable, "modules" to modules)
+
+        doFirst {
+            if (screepsUser == null && screepsPassword == null && screepsToken == null) {
+                throw InvalidUserDataException("you need to supply either screepsUser and screepsPassword or screepsToken before you can upload code")
+            }
+            if (!minifiedCodeLocation.isDirectory) {
+                throw InvalidUserDataException("found no code to upload at ${minifiedCodeLocation.path}")
+            }
+
+            val jsFiles = minifiedCodeLocation.listFiles { _, name -> name.endsWith(".js") }
+            modules.putAll(jsFiles.associate { it.nameWithoutExtension to it.readText() })
+
+            println("uploading ${jsFiles.count()} files to branch $branchStable on server $host")
         }
 
     }
