@@ -1,20 +1,7 @@
 package starter
 
 import screeps.api.*
-import screeps.api.structures.StructureSpawn
-import screeps.utils.unsafe.jsObject
-import starter.behaviours.behaviourDropOffEnergy
-import starter.behaviours.getClosestStructureToBuild
-import kotlin.UInt.Companion.MAX_VALUE
-
-
-
-
-
-
-
-
-
+import starter.behaviours.depositEnergyAt
 
 
 fun Creep.behaviourGoto(): Boolean {
@@ -73,7 +60,7 @@ fun Creep.behaviourDeposit(): Boolean {
 		//console.log("best path for depost is from: $pos to $bestPos cost $bestCost")
 
 		memory.behaviour.targetPos = bestPos
-		if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+		if (depositEnergyAt(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
 			//memory.behaviour.gotoPos =memory.behaviour.targetPos
 			moveTo(bestPos)
 			return true
@@ -88,25 +75,3 @@ fun Creep.behaviourDeposit(): Boolean {
 
 
 
-
-
-fun Creep.behaviourBuildContainer(): Boolean {
-	if (carry.energy == 0) {
-		return false
-	}
-	var target = getClosestStructureToBuild()
-
-//	var target = room.lookAt( pos.x, pos.y).filter { (it.type == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE)  }
-	if (target == null || target.pos.x != pos.x || target.pos.y != pos.y) {
-		//nothing to build
-		return false
-	}
-	//memory.behaviour.targetPos = target.pos
-	if (build(target) == ERR_NOT_IN_RANGE) {
-		return true
-	} else {
-		return true
-	}
-
-	return false
-}

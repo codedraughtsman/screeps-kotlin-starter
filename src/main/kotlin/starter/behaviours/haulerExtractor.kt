@@ -3,77 +3,97 @@ package starter.behaviours
 import screeps.api.*
 import starter.*
 
-private fun Creep.behavourDepositEnergyInBaseStorage() {
-	if (room.memory.bunker.mainStorePos== null) {
-		return
+fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
+	if (isHarvesting()){
+		return false
 	}
-	behaviourDeposit()
-	val targetPos = room.getPositionAt(room.memory.bunker.mainStorePos!!.x, room.memory.bunker.mainStorePos!!.y)
+	if (room.memory.bunker.mainStorePos== null) {
+		console.log("behavourDepositEnergyInBaseStorage, error, no main storage pos set")
+		return false
+	}
+	//todo what if the storage is full? should it be deposited some where else?
+
+	val targetPos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
 	if (targetPos == null) {
 		console.log("invalid pos in behavourDepositEnergyInBaseStorage")
-		return
+		return false
 	}
-	if (behaviourDropOffEnergy(targetPos) == ERR_NOT_IN_RANGE) {
+
+	if (depositEnergyAt(targetPos) == ERR_NOT_IN_RANGE) {
 		moveTo(targetPos)
+		return true
 	}
+	return true
 
 }
 
-fun Creep.behaviourHaulerPickup(): Boolean {
-	if (!isHarvesting()) {
-		return false
-	}
-	var haulerFlags = room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }
-	if (haulerFlags.isNullOrEmpty()) {
-		return false
-	}
-	//find a hauler flag that on one else is using
-	for (flag in haulerFlags) {
-		if (Game.creeps.values.count {
-					it.memory.role == Role.HAULER && it.memory.behaviour.sourcePos != null
-							&& it.memory.behaviour.sourcePos!!.x == flag.pos.x
-							&& it.memory.behaviour.sourcePos!!.y == flag.pos.y
-				} == 0) {
-			memory.behaviour.sourcePos = flag.pos
-			break
+private fun findNearestExtractorThatNeedAHauler(creep: Creep): RoomPosition? {
+	val extractorCreeps = Game.creeps.values.filter { it.memory.role == Role.EXTRACTOR }
+	val haulerCreeps = Game.creeps.values.filter { it.memory.role == Role.HAULER_EXTRACTOR }
+	var leastPos :RoomPosition? = null
+	var leastMatch = Int.MAX_VALUE
+	for (extractor in extractorCreeps){
+		if (extractor.memory.behaviour.targetPos == null) {
+			continue
 		}
+		val targetPos = loadPosFromMemory(extractor.memory.behaviour.targetPos!!)
+		var foundMatch = 0
+		for (hauler in haulerCreeps) {
+			if (hauler.memory.behaviour.sourcePos == null){
+				continue
+			}
+			val source = loadPosFromMemory(hauler.memory.behaviour.sourcePos!!)
+			if (source.isEqualTo(targetPos)){
+				foundMatch ++
+			}
+		}
+		if (foundMatch == 0) {
+			return extractor.memory.behaviour.targetPos
+		}
+		if (foundMatch < leastMatch) {
+			leastMatch = foundMatch
+			leastPos = targetPos
+		}
+
+	}
+	return leastPos
+}
+
+fun Creep.behaviourHaulerPickup(): Boolean {
+	if (!isHarvesting()){
+		return false
 	}
 	if (memory.behaviour.sourcePos == null) {
-		console.log("haulerPickup: could not find a vacant flag")
-		memory.behaviour.sourcePos = haulerFlags[0].pos
-	}
-	memory.behaviour.targetPos = memory.behaviour.sourcePos
-
-	console.log("behavourPickup: from $pos to closest source of energy ${memory.behaviour.targetPos}")
-	//try to harvest location
-	if (memory.behaviour.targetPos != null) {
-		//memory.behaviour.targetPos = room.getPositionAt( memory.behaviour.targetPos!!.x-1, memory.behaviour.targetPos!!.y)
-
-		if (pickupEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
-			//go and harvest this pos
-			console.log("HaulerPickup out of range of pickup, moving to ${memory.behaviour.targetPos!!}")
-			moveTo(memory.behaviour.targetPos!!.x, memory.behaviour.targetPos!!.y)
-			return true
-		} else {
-			//success
-			return true
-			//todo use the move action as well
+		memory.behaviour.sourcePos = findNearestExtractorThatNeedAHauler(this)
+		if (memory.behaviour.sourcePos == null) {
+			console.log("behaviourHaulerPickup: error, could not find a free extractor flag")
+			return false
 		}
+	}
+
+	val targetPos = loadPosFromMemory(memory.behaviour.sourcePos!!)
+//	if (pos != targetPos) {
+//		//todo never actually stand on the flag because it will block the extractor
+//		moveTo(targetPos)
+//		return true
+//	}
+
+	if (pickupEnergyFromPosition(targetPos) != OK) {
+		moveTo(targetPos)
+		//console.log("behaviourHaulerPickup: error, failed to harvest energy from $targetPos ")
 	}
 
 	return false
 }
-
-fun Creep.behaviourStore(): Boolean {
+/*
+fun Creep.behaviourDepositEnergyInNearestStorage(): Boolean {
 	//find the closest place to deposit energy in
 
 	var targets = room.find(FIND_MY_STRUCTURES)
-//			.filter { (it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE) }
 			.filter { (it.structureType == STRUCTURE_STORAGE) }
 
-	//console.log("not storage filtering ${targets}")
+	//todo what if the storage is full? should it be deposited some where else?
 	targets = targets.filter { it.unsafeCast<Store>().storeCapacity > it.unsafeCast<Store>().store.energy }
-//	console.log("after storage filtering ${targets}")
 
 
 	if (targets.isNotEmpty()) {
@@ -92,7 +112,7 @@ fun Creep.behaviourStore(): Boolean {
 //		console.log("best path for store is from: $pos to $bestPos cost $bestCost")
 
 		memory.behaviour.targetPos = bestPos
-		if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+		if (depositEnergyAt(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
 			//memory.behaviour.gotoPos =memory.behaviour.targetPos
 			moveTo(bestPos)
 			return true
@@ -103,7 +123,7 @@ fun Creep.behaviourStore(): Boolean {
 		if (targets.isNotEmpty()) {
 			val bestPos = targets[0].pos
 			memory.behaviour.targetPos = bestPos
-			if (behaviourDropOffEnergy(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+			if (depositEnergyAt(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
 				//memory.behaviour.gotoPos =memory.behaviour.targetPos
 				moveTo(bestPos)
 				return true
@@ -113,3 +133,4 @@ fun Creep.behaviourStore(): Boolean {
 	}
 	return false
 }
+*/

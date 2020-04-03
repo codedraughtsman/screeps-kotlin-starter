@@ -9,13 +9,16 @@ enum class Behavours {
 	GOTO,
 	HARVEST,
 	PICKUP,
-	DEPOSIT,
+	REFILL_STRUCTURES,
 	BUILD,
 	UPGRADE,
-	EXTRACT,
+	HARVEST_EXTRACTOR,
 	HAULER_PICKUP,
-	STORE_ENERGY,
-	BUILD_CONTAINER
+	DEPOSIT_ENERGY_IN_NEAREST_STORAGE,
+	BUILD_CONTAINER,
+	HARVEST_FROM_SAVED_SOURCE,
+	PICKUP_FROM_BASE_STORAGE
+
 }
 
 fun Creep.runBehaviour() {
@@ -31,25 +34,35 @@ fun Creep.runBehaviour() {
 		behaviourBuildWhileMoving()
 	}
 }
+
 private fun Creep.globalBehavour() {
 	updateIsCollectingEnergy()
 
-	val resourceToPickup = pos.findInRange(FIND_DROPPED_RESOURCES, 1)
-	if (!resourceToPickup.isNullOrEmpty()) {
-		//todo grab the biggest resource available
-		val errorCode = pickup(resourceToPickup[0])
-		//displayErrorCode(errorCode, "pickup resource behavour")
+	if (memory.role == Role.HAULER_EXTRACTOR ||
+			memory.role == Role.EXTRACTOR){
+		return
 	}
+
+	val resourceToPickup = pos.findInRange(FIND_DROPPED_RESOURCES, 1)
+
+	for (resource in resourceToPickup) {
+		//todo grab the biggest resource available
+		val errorCode = pickup(resource)
+	}
+
 }
 
 private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	var out: MutableList<Behavours> = arrayListOf()
 	when (role) {
-		Role.HARVESTER -> out = arrayListOf(Behavours.PICKUP, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
-		Role.BUILDER -> out = arrayListOf(Behavours.GOTO, Behavours.PICKUP, Behavours.BUILD, Behavours.DEPOSIT, Behavours.UPGRADE)
+		Role.HARVESTER -> out = arrayListOf(Behavours.HARVEST_FROM_SAVED_SOURCE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
+		Role.BUILDER -> out = arrayListOf(Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
-		Role.EXTRACTOR -> out = arrayListOf(Behavours.BUILD_CONTAINER,Behavours.EXTRACT) //TODO static build and upgrade
-		Role.HAULER -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.STORE_ENERGY, Behavours.DEPOSIT, Behavours.BUILD, Behavours.UPGRADE)
+		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR) //TODO static build and upgrade
+//		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
+		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
+		Role.HAULER_BASE -> out = arrayListOf(Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES)
+
 	}
 	return out
 }
@@ -59,13 +72,15 @@ private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
 	when (behaviour) {
 		Behavours.GOTO -> isFinished = behaviourGoto()
 		Behavours.PICKUP -> isFinished = behaviourPickup()
-		Behavours.DEPOSIT -> isFinished = behaviourDeposit()
+		Behavours.PICKUP_FROM_BASE_STORAGE -> isFinished = behaviourPickupFromBaseStorage()
+		Behavours.REFILL_STRUCTURES -> isFinished = behaviourDeposit()
 		Behavours.BUILD -> isFinished = behaviourBuild()
 		Behavours.UPGRADE -> isFinished = upgrade(room.controller!!)
-		Behavours.EXTRACT -> isFinished = extractor()
+		Behavours.HARVEST_EXTRACTOR -> isFinished = behaviourHarvestExtractor()
 		Behavours.HAULER_PICKUP -> isFinished = behaviourHaulerPickup()
-		Behavours.STORE_ENERGY -> isFinished = behaviourStore()
+		Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE -> isFinished = behavourDepositEnergyInBaseStorage()
 		Behavours.BUILD_CONTAINER -> isFinished = behaviourBuildContainer()
+		Behavours.HARVEST_FROM_SAVED_SOURCE -> isFinished = behaviourHarvestFromSavedSource()
 
 	}
 	return isFinished

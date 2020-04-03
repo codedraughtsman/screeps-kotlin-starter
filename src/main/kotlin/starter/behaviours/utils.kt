@@ -2,8 +2,13 @@ package starter.behaviours
 
 import screeps.api.*
 import starter.Role
+import starter.behaviour
 import starter.bunker
 import starter.role
+
+fun loadPosFromMemory(targetPos: RoomPosition): RoomPosition {
+	return RoomPosition(targetPos!!.x, targetPos!!.y,targetPos!!.roomName)
+}
 
 private fun displayErrorCode(errorCode: ScreepsReturnCode, msg: String = "") {
 	if (errorCode != OK) {
@@ -20,39 +25,53 @@ fun Creep.positionHasEnergy(pos: RoomPosition): Boolean {
 }
 
 /*
-picks up any of the energy at the position
+picks up any of the energy from storage OR mines it if is a source.
  */
-fun Creep.pickupEnergy(targetPos: RoomPosition): ScreepsReturnCode {
-	//todo just try to pick up at location. no need for checking
-	val newPos = room.getPositionAt(targetPos.x, targetPos.y)
-	if (newPos == null) {
-		console.log("invalid pos in pickupEnergy")
+fun Creep.pickupEnergyFromPosition(targetPos: RoomPosition): ScreepsReturnCode {
+
+
+	val resourceToPickup = targetPos.findInRange(FIND_DROPPED_RESOURCES, 1)
+
+	for (resource in resourceToPickup) {
+		if (pickup(resource) == OK) {
+			return OK
+		}
 	}
 
 
-	val sources = newPos?.findInRange(FIND_SOURCES_ACTIVE, 1)
-	if (!sources.isNullOrEmpty()) {
-		return harvest(sources[0])
-	}
-	val structures = newPos?.findInRange(FIND_MY_STRUCTURES, 1)
+	val structures = targetPos.findInRange(FIND_MY_STRUCTURES, 1)
 	if (!structures.isNullOrEmpty()) {
-		val containers = structures?.filter { it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE }
+		val containers = structures.filter { it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE }
 		if (containers.isNotEmpty()) {
 			return withdraw(containers[0], RESOURCE_ENERGY)
 		}
 	}
 
+	val sources = targetPos.findInRange(FIND_SOURCES_ACTIVE, 1)
+	if (!sources.isNullOrEmpty()) {
+		return harvest(sources[0])
+	}
 	return ERR_NOT_IN_RANGE
 }
 
-fun Creep.behaviourDropOffEnergy(targetPos: RoomPosition): ScreepsReturnCode {
+fun Creep.depositEnergyAt(targetPos: RoomPosition): ScreepsReturnCode {
 	val newPos = room.getPositionAt(targetPos.x, targetPos.y)
 	if (newPos == null) {
 		console.log("invalid pos in pickupEnergy")
 	}
+
+	//try to transfer to target
 	val targets = room.find(FIND_MY_STRUCTURES).filter { it.pos == targetPos }
 	if (!targets.isNullOrEmpty()) {
-		return transfer(targets[0], RESOURCE_ENERGY)
+		for (structure in targets) {
+			if (transfer(structure, RESOURCE_ENERGY) == OK) {
+				return OK
+			}
+		}
+	}
+
+	if (pos.x == targetPos.x && pos.y == targetPos.y &&pos.roomName == targetPos.roomName) {
+		drop(RESOURCE_ENERGY)
 	}
 	return ERR_NOT_IN_RANGE
 }
@@ -119,3 +138,34 @@ fun Creep.getClosestSourceOfEnergy(): RoomPosition? {
 fun Creep.getClosestStructureToBuild(): ConstructionSite? {
 	return pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
 }
+
+fun findNearestFreeExtractorFlag(creep: Creep, creepRole:Role): RoomPosition? {
+	val flags = creep.pos.lookFor(LOOK_FLAGS)
+	val flagOnSquare = (flags != null &&
+			flags.filter { it.name.startsWith("extractor", true) }.isNotEmpty())
+	if (flagOnSquare) {
+		//we are standing on an extractor flag. lets grab it.
+		return creep.pos
+	}
+
+	val flagPositions = creep.room.find(FIND_FLAGS)
+			.filter { it.name.startsWith("extractor", true) }
+	if (flagPositions.isNullOrEmpty()) {
+		return null
+	}
+
+	//todo sort the flags by distance to creep
+
+	for (flag in flagPositions) {
+		if (Game.creeps.values.count {
+					it.memory.role == creepRole && it.memory.behaviour.targetPos != null
+							&& it.memory.behaviour.targetPos!!.x == flag.pos.x
+							&& it.memory.behaviour.targetPos!!.y == flag.pos.y
+				} == 0) {
+			return flag.pos
+		}
+	}
+
+	return null
+}
+

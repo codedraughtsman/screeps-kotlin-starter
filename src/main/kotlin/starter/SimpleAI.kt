@@ -128,14 +128,62 @@ private fun spawnCreeps(
 	var body: Array<BodyPartConstant> = arrayOf<BodyPartConstant>()
 	var role: Role = Role.UNASSIGNED
 	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
-	val numberOfHaulerFlags =  spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("hauler", true) }.count()
+
+	//controller must exist if the room has a spawn.
+	if (spawn.room.controller!!.level <2) {
+		if (creeps.count { it.memory.role == Role.HARVESTER } < 3) {
+			mySpawnCreeps(spawn, Role.HARVESTER, arrayOf<BodyPartConstant>(WORK, CARRY, MOVE))
+		}
+		return
+	}
+
+	if (creeps.count { it.memory.role == Role.HAULER_BASE } < 1){
+		mySpawnCreeps(spawn, Role.HAULER_BASE,bestHauler(spawn))
+		return
+	}
+	if ( creeps.count { it.memory.role == Role.EXTRACTOR } *2 > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
+		mySpawnCreeps(spawn, Role.HAULER_EXTRACTOR,bestHauler(spawn,spawn.room.controller!!.level >= 3))
+		return
+	}
+	if ( creeps.count { it.memory.role == Role.EXTRACTOR }  < numberOfExtractorFlags) {
+		mySpawnCreeps(spawn, Role.EXTRACTOR, bestExtractor(spawn))
+		return
+	}
+	if ( creeps.count { it.memory.role == Role.BUILDER }  < 2) {
+		mySpawnCreeps(spawn, Role.BUILDER, bestExtractor(spawn))
+		return
+	}
+
+
+}
+
+fun mySpawnCreeps(spawn: StructureSpawn, role: Role, body: Array<BodyPartConstant>) {
+	val newName = "${role.name}_${Game.time}"
+	val code = spawn.spawnCreep(body, newName, options {
+		memory = jsObject<CreepMemory> { this.role = role }
+	})
+
+	when (code) {
+		OK -> console.log("spawning $newName with body $body")
+		ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
+		else -> console.log("unhandled error code $code")
+	}
+}
+
+/*private fun spawnCreeps(
+		creeps: Array<Creep>,
+		spawn: StructureSpawn
+) {
+	var body: Array<BodyPartConstant> = arrayOf<BodyPartConstant>()
+	var role: Role = Role.UNASSIGNED
+	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
 	if (creeps.count { it.memory.role == Role.HARVESTER } == 0) {
 		body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
 		role = Role.HARVESTER
-	} else if ( creeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER }) {
+	} else if ( creeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
 		//need to make an extractor
 		body = bestHauler(spawn)
-		role = Role.HAULER
+		role = Role.HAULER_EXTRACTOR
 
 	} else if (numberOfExtractorFlags > creeps.count { it.memory.role == Role.EXTRACTOR }) {
 		//need to make an extractor
@@ -178,7 +226,7 @@ private fun spawnCreeps(
 		ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
 		else -> console.log("unhandled error code $code")
 	}
-}
+}*/
 
 private fun houseKeeping(creeps: Record<String, Creep>) {
 	if (Game.creeps.isEmpty()) return  // this is needed because Memory.creeps is undefined
