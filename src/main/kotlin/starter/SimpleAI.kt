@@ -121,6 +121,42 @@ private fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPa
 
 }
 
+private fun bestBuilder(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
+	val mustHave = arrayOf<BodyPartConstant>(CARRY)
+	var body = arrayOf<BodyPartConstant>(WORK, MOVE)
+	if (road) {
+		body = arrayOf<BodyPartConstant>(WORK, WORK, MOVE)
+	}
+	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+	val mustHaveCost = mustHave.sumBy{ BODYPART_COST[it]!! }
+
+	var multiples = (spawn.room.energyCapacityAvailable - mustHaveCost) / bodyCost
+
+	var outArray: MutableList<BodyPartConstant> = arrayListOf()
+
+	for (part in mustHave) {
+		outArray.add(part)
+	}
+
+	for (i in 1..multiples) {
+		for (obj in body){
+			outArray.add(obj)
+		}
+	}
+	val fillers = arrayOf<BodyPartConstant>(WORK, CARRY)
+	for (fillPart in fillers) {
+		var fillCost = BODYPART_COST[fillPart]!!
+
+		while (outArray.sumBy { BODYPART_COST[it]!! } + fillCost <= spawn.room.energyCapacityAvailable) {
+			outArray.add(fillPart)
+		}
+	}
+
+	return outArray.toTypedArray()
+
+}
+
 private fun spawnCreeps(
 		creeps: Array<Creep>,
 		spawn: StructureSpawn
@@ -149,8 +185,10 @@ private fun spawnCreeps(
 		mySpawnCreeps(spawn, Role.EXTRACTOR, bestExtractor(spawn))
 		return
 	}
-	if ( creeps.count { it.memory.role == Role.BUILDER }  < 2) {
-		mySpawnCreeps(spawn, Role.BUILDER, bestExtractor(spawn))
+//	if ( creeps.count { it.memory.role == Role.BUILDER }  < spawn.room.memory.numberOfBuilders) {
+
+		if ( creeps.count { it.memory.role == Role.BUILDER }  < 5) {
+		mySpawnCreeps(spawn, Role.BUILDER, bestBuilder(spawn))
 		return
 	}
 

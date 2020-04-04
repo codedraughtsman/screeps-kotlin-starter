@@ -1,6 +1,7 @@
 package starter.behaviours
 
 import screeps.api.*
+import screeps.api.structures.Structure
 import starter.Role
 import starter.behaviour
 import starter.bunker
@@ -137,6 +138,21 @@ fun Creep.getClosestSourceOfEnergy(): RoomPosition? {
 
 fun Creep.getClosestStructureToBuild(): ConstructionSite? {
 	return pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
+}
+
+fun Creep.getStructureInRangeToRepair(): Structure? {
+	val structures =  pos.findInRange(FIND_MY_STRUCTURES,3)
+	var maxDiff =0
+	var outputStructure : Structure? = null
+	console.log("getStructureInRangeToRepair for $pos is $structures")
+	for (structure in structures) {
+		val diff = structure.hitsMax -structure.hits
+		if (diff > maxDiff) {
+			maxDiff = diff
+			outputStructure = structure
+		}
+	}
+	return outputStructure
 }
 
 fun findNearestFreeExtractorFlag(creep: Creep, creepRole:Role): RoomPosition? {

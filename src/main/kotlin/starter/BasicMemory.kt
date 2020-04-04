@@ -83,7 +83,7 @@ var RoomMemory.layoutExtensions: Boolean by memory { false }
 
 //var screeps.api.RoomMemory.influenceMaps : InfluenceMapsMemory by memory { jsObject<InfluenceMapsMemory> {distanceToSources = Array<Array<IntArray>>() }}
 
-
+var RoomMemory.numberOfBuilders : Int by memory { 6 }
 
 
 
@@ -95,4 +95,4 @@ var RoomMemory.kangaroo: Kangaroo by memory {
 
 
 /* spawn.memory */
-var SpawnMemory.test : Int by memory { 0 }
+//var SpawnMemory.numberOfBuilders : Int by memory { 2 }

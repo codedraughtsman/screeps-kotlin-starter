@@ -44,6 +44,7 @@ fun Creep.behaviourHarvestFromSavedSource(): Boolean {
 
 fun Creep.behaviourPickupFromBaseStorage(): Boolean {
 	if (!isHarvesting()) {
+		console.log("behaviourPickupFromBaseStorage is not harvesting")
 		return false
 	}
 
@@ -52,6 +53,7 @@ fun Creep.behaviourPickupFromBaseStorage(): Boolean {
 		return false
 	}
 	val targePos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
+	console.log("behaviourPickupFromBaseStorage: ${name}, target pos $targePos")
 	if (pickupEnergyFromPosition(targePos) == ERR_NOT_IN_RANGE) {
 		if (!pos.isNearTo(targePos)) {
 			moveTo(targePos)
@@ -104,7 +106,6 @@ fun Creep.behaviourBuild(): Boolean {
 	memory.behaviour.targetPos = target.pos
 	if (build(target!!) == ERR_NOT_IN_RANGE) {
 		moveTo(target.pos)
-		console.log("target $target is not in range, set gotoPos to it")
 		return true
 	} else {
 		return true
@@ -133,5 +134,46 @@ fun Creep.behaviourBuildWhileMoving(): Boolean {
 
 	}
 
+	return false
+}
+
+fun Creep.behaviourRepairWhileMoving(): Boolean {
+	if (isHarvesting()) {
+		//do not repair anything while picking up energy.
+		return false
+	}
+
+	if (carry.energy < ((3*carryCapacity)/4)) {
+		//only repair with the first 1/4 of the energy that it is carrying
+		return false
+	}
+
+	var target = getStructureInRangeToRepair()
+	if (target == null) {
+		//nothing to build
+		console.log("behaviourRepairWhileMoving: no targets")
+		return false
+	}
+	console.log("behaviourRepairWhileMoving: found a target $target")
+	if (repair(target!!) == ERR_NOT_IN_RANGE) {
+		console.log("behaviourRepairWhileMoving: error, target is not in range. it should be")
+	}
+
+	return false
+}
+
+fun Creep.moveOffSourcePos(): Boolean {
+	if (memory.behaviour.sourcePos == null) {
+		return false
+	}
+	val p = loadPosFromMemory(memory.behaviour.sourcePos!!)
+	if (pos.isEqualTo(p)) {
+		//move in a random direction
+		val directions = getAdjcentSquares(p)
+//		val index = RandInt()
+		val newPos :RoomPosition = directions[0]
+		moveTo(newPos)
+
+	}
 	return false
 }

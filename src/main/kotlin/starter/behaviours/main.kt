@@ -22,6 +22,7 @@ enum class Behavours {
 }
 
 fun Creep.runBehaviour() {
+	updateIsCollectingEnergy()
 	globalBehavour()
 	var behavours = getBehavioursForRole(memory.role as Role)
 	for (behaviour in behavours) {
@@ -31,6 +32,7 @@ fun Creep.runBehaviour() {
 		}
 	}
 	if (memory.role != Role.HARVESTER) {
+		behaviourRepairWhileMoving()
 		behaviourBuildWhileMoving()
 	}
 }
@@ -57,6 +59,7 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	when (role) {
 		Role.HARVESTER -> out = arrayListOf(Behavours.HARVEST_FROM_SAVED_SOURCE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
 		Role.BUILDER -> out = arrayListOf(Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
+
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
 		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR) //TODO static build and upgrade
 //		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
