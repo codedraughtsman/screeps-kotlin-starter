@@ -200,7 +200,7 @@ private fun spawnCreeps(
 
 
 
-	if (creeps.count { it.memory.role == Role.HAULER_BASE } < 1){
+	if (creeps.count { it.memory.role == Role.HAULER_BASE } < 2){
 		mySpawnCreeps(spawn, Role.HAULER_BASE,bestHaulerBase(spawn))
 		return
 	}

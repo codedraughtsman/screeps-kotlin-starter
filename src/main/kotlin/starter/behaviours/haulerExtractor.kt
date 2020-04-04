@@ -12,7 +12,7 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 		return false
 	}
 	//todo what if the storage is full? should it be deposited some where else?
-
+	val bunker = Bunker(room)
 	val targetPos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
 	if (targetPos == null) {
 		console.log("invalid pos in behavourDepositEnergyInBaseStorage")

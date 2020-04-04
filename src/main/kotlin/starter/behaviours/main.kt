@@ -2,6 +2,8 @@ package starter.behaviours
 
 import screeps.api.Creep
 import screeps.api.FIND_DROPPED_RESOURCES
+import screeps.api.FIND_TOMBSTONES
+import screeps.api.RESOURCE_ENERGY
 import starter.*
 
 enum class Behavours {
@@ -56,6 +58,12 @@ private fun Creep.globalBehavour() {
 	for (resource in resourceToPickup) {
 		//todo grab the biggest resource available
 		val errorCode = pickup(resource)
+	}
+
+	val tombstoneToPickup = pos.findInRange(FIND_TOMBSTONES, 1)
+
+	for (tomb in tombstoneToPickup) {
+		val errorCode = withdraw(tomb, RESOURCE_ENERGY)
 	}
 
 }

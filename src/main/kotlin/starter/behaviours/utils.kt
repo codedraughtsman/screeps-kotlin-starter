@@ -166,7 +166,7 @@ fun Creep.getStructureInRangeToRepair(): Structure? {
 	var outputStructure : Structure? = null
 
 	for (structure in structures) {
-		console.log("structure ${structure.structureType }at ${structure.pos} has ${structure.hitsMax} hitMax, and ${structure.hits} hits")
+//		console.log("structure ${structure.structureType }at ${structure.pos} has ${structure.hitsMax} hitMax, and ${structure.hits} hits")
 		val hitPointsLeftPercentage = healthPercentage(this)
 		if (hitPointsLeftPercentage < leastHitPointsPercentage) {
 			leastHitPointsPercentage = hitPointsLeftPercentage

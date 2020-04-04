@@ -164,10 +164,9 @@ fun Creep.behaviourRepairWhileMoving(): Boolean {
 		//do not repair anything while picking up energy.
 		return false
 	}
-	console.log("behaviourRepairWhileMoving:$name at $pos")
 
 	if (carry.energy < ((3*carryCapacity)/4)) {
-		console.log("behaviourRepairWhileMoving: not carrying enough energy")
+//		console.log("behaviourRepairWhileMoving: not carrying enough energy")
 		//only repair with the first 1/4 of the energy that it is carrying
 		return false
 	}
@@ -175,13 +174,12 @@ fun Creep.behaviourRepairWhileMoving(): Boolean {
 	var target = getStructureInRangeToRepair()
 	if (target == null) {
 		//nothing to build
-		console.log("behaviourRepairWhileMoving: no targets")
+//		console.log("behaviourRepairWhileMoving: no targets")
 		return false
 	}
 	if (repair(target!!) == ERR_NOT_IN_RANGE) {
 		console.log("behaviourRepairWhileMoving: error, target is not in range. it should be")
 	}
-	console.log("behaviourRepairWhileMoving: it worked")
 	return false
 }
 
@@ -221,7 +219,9 @@ fun Creep.moveOffBaseStoragePos(): Boolean {
 fun Creep.behaviourDeposit(): Boolean {
 	//find the closest place to deposit energy in
 	val targets = room.find(FIND_MY_STRUCTURES)
-			.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
+			.filter { (it.structureType == STRUCTURE_EXTENSION
+					|| it.structureType == STRUCTURE_SPAWN
+					|| it.structureType == STRUCTURE_TOWER) }
 			.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
 
 
