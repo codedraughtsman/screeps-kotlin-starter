@@ -1,9 +1,6 @@
 package starter.behaviours
 
-import screeps.api.Creep
-import screeps.api.ERR_NOT_IN_RANGE
-import screeps.api.FIND_SOURCES_ACTIVE
-import screeps.api.RoomPosition
+import screeps.api.*
 import starter.*
 
 
@@ -42,9 +39,9 @@ fun Creep.behaviourHarvestFromSavedSource(): Boolean {
 }
 
 
-fun Creep.behaviourPickupFromBaseStorage(): Boolean {
-	if (!isHarvesting()) {
-		console.log("behaviourPickupFromBaseStorage is not harvesting")
+fun Creep.behaviourPickupFromBaseStorage(forced: Boolean =false): Boolean {
+	if ( !( forced || isHarvesting())) {
+//		console.log("behaviourPickupFromBaseStorage is not harvesting")
 		return false
 	}
 
@@ -53,7 +50,9 @@ fun Creep.behaviourPickupFromBaseStorage(): Boolean {
 		return false
 	}
 	val targePos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
-	console.log("behaviourPickupFromBaseStorage: ${name}, target pos $targePos")
+
+	//todo only the basehauler can pickup energy below 300
+
 	if (pickupEnergyFromPosition(targePos) == ERR_NOT_IN_RANGE) {
 		if (!pos.isNearTo(targePos)) {
 			moveTo(targePos)
@@ -98,7 +97,7 @@ fun Creep.behaviourPickup(): Boolean {
 }
 
 fun Creep.behaviourBuild(): Boolean {
-	var target = getClosestStructureToBuild()
+	var target = getClosestStructureToBuild(includeRoads =false)
 	if (target == null) {
 		//nothing to build
 		return false
@@ -136,14 +135,39 @@ fun Creep.behaviourBuildWhileMoving(): Boolean {
 
 	return false
 }
+fun Creep.behaviourUpgradeWhileMoving(): Boolean {
+	if (isHarvesting()) {
+		//do not build anything while picking up energy.
+		return false
+	}
+
+	if (carry.energy < ((3*carryCapacity)/4)) {
+		//only build with the first 1/4 of the energy that it is carrying
+		return false
+	}
+
+	var target = room.controller
+	if (target == null) {
+		//nothing to build
+		return false
+	}
+	if (upgradeController(target!!) == ERR_NOT_IN_RANGE) {
+
+	}
+
+	return false
+}
+
 
 fun Creep.behaviourRepairWhileMoving(): Boolean {
 	if (isHarvesting()) {
 		//do not repair anything while picking up energy.
 		return false
 	}
+	console.log("behaviourRepairWhileMoving:$name at $pos")
 
 	if (carry.energy < ((3*carryCapacity)/4)) {
+		console.log("behaviourRepairWhileMoving: not carrying enough energy")
 		//only repair with the first 1/4 of the energy that it is carrying
 		return false
 	}
@@ -154,11 +178,10 @@ fun Creep.behaviourRepairWhileMoving(): Boolean {
 		console.log("behaviourRepairWhileMoving: no targets")
 		return false
 	}
-	console.log("behaviourRepairWhileMoving: found a target $target")
 	if (repair(target!!) == ERR_NOT_IN_RANGE) {
 		console.log("behaviourRepairWhileMoving: error, target is not in range. it should be")
 	}
-
+	console.log("behaviourRepairWhileMoving: it worked")
 	return false
 }
 
@@ -171,9 +194,99 @@ fun Creep.moveOffSourcePos(): Boolean {
 		//move in a random direction
 		val directions = getAdjcentSquares(p)
 //		val index = RandInt()
+		directions.shuffle()
 		val newPos :RoomPosition = directions[0]
 		moveTo(newPos)
 
+	}
+	return false
+}
+fun Creep.moveOffBaseStoragePos(): Boolean {
+	if (room.memory.bunker.mainStorePos == null) {
+		return false
+	}
+	val p = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
+	if (pos.isEqualTo(p)) {
+		//move in a random direction
+		val directions = getAdjcentSquares(p)
+		directions.shuffle()
+//		val index = RandInt()
+		val newPos :RoomPosition = directions[0]
+		moveTo(newPos)
+
+	}
+	return false
+}
+
+fun Creep.behaviourDeposit(): Boolean {
+	//find the closest place to deposit energy in
+	val targets = room.find(FIND_MY_STRUCTURES)
+			.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
+			.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+
+
+	if (targets.isNotEmpty()) {
+		var bestPos = targets[0].pos
+		var bestCost: Int? = null
+		for (target in targets) {
+			//val target = targets[0]
+			val path = PathFinder.search(pos, target.pos)
+			val cost: Int = path.cost
+			//console.log(" looking at path from $pos to ${target.pos} cost $cost")
+			if (bestCost == null || cost < bestCost) {
+				bestCost = cost
+				bestPos = target.pos
+			}
+		}
+		//console.log("best path for depost is from: $pos to $bestPos cost $bestCost")
+
+		memory.behaviour.targetPos = bestPos
+		val output = depositEnergyAt(memory.behaviour.targetPos!!)
+		if (output == ERR_NOT_IN_RANGE) {
+			//memory.behaviour.gotoPos =memory.behaviour.targetPos
+			moveTo(bestPos)
+			return true
+		}
+		else if (output == OK){
+			//todo drop energy for builder
+			return true
+		}
+	} else {
+		//console.log("dropBehavour could not find anything")
+	}
+	return false
+}
+
+fun Creep.behaviourRefillBuilders(): Boolean {
+	//find the closest place to deposit energy in
+	val targets = room.find(FIND_MY_CREEPS)
+			.filter { (it.memory.role == Role.BUILDER) }
+			.filter { (it.carry.energy *4 < it.carryCapacity*3)} // 3/4 of capactiy
+
+
+	if (targets.isNotEmpty()) {
+		var bestPos = targets[0].pos
+		var bestCost: Int? = null
+		for (target in targets) {
+			//val target = targets[0]
+			val path = PathFinder.search(pos, target.pos)
+			val cost: Int = path.cost
+			//console.log(" looking at path from $pos to ${target.pos} cost $cost")
+			if (bestCost == null || cost < bestCost) {
+				bestCost = cost
+				bestPos = target.pos
+			}
+		}
+		//console.log("best path for depost is from: $pos to $bestPos cost $bestCost")
+
+		memory.behaviour.targetPos = bestPos
+		if (depositEnergyAt(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
+			//memory.behaviour.gotoPos =memory.behaviour.targetPos
+			moveTo(bestPos)
+			return true
+		}
+	} else {
+		//console.log("dropBehavour could not find anything")
 	}
 	return false
 }

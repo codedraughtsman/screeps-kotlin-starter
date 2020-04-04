@@ -29,7 +29,7 @@ fun Creep.isHarvesting(): Boolean {
 	return memory.isCollectingEnergy
 }
 
-fun Creep.upgrade(controller: StructureController): Boolean {
+fun Creep.behavourUpgrade(controller: StructureController): Boolean {
 	updateIsCollectingEnergy()
 	if (isHarvesting()) {
 		return getEnergy()
@@ -64,7 +64,7 @@ fun Creep.build(assignedRoom: Room = this.room): Boolean {
 				room.createConstructionSite(roadPos, STRUCTURE_ROAD)
 			} else {
 				val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return false
-				return upgrade(mainSpawn.room.controller!!)
+				return behavourUpgrade(mainSpawn.room.controller!!)
 			}
 		}
 	}

@@ -37,8 +37,10 @@ fun gameLoop() {
 		*/
 
 	}
-
-	for ((_, creep) in Game.creeps) {
+	for (creep in Game.creeps.values.filter { it.memory.role == Role.HAULER_BASE }) {
+		creep.runBehaviour()
+	}
+	for (creep in Game.creeps.values.filter { it.memory.role != Role.HAULER_BASE }) {
 		creep.runBehaviour()
 	}
 
@@ -113,8 +115,31 @@ private fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPa
 	outArray.add(WORK)
 
 	for (i in 1..multiples) {
-		outArray.add(CARRY)
-		outArray.add(MOVE)
+		for (part in body) {
+			outArray.add(part)
+		}
+	}
+
+	return outArray.toTypedArray()
+
+}
+private fun bestHaulerBase(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
+	var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
+	if (road) {
+		body = arrayOf<BodyPartConstant>(CARRY, CARRY, MOVE)
+	}
+	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+
+	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[WORK]!!) / bodyCost
+
+	var outArray: MutableList<BodyPartConstant> = arrayListOf()
+	outArray.add(WORK)
+
+	for (i in 1..multiples) {
+		for (part in body) {
+			outArray.add(part)
+		}
 	}
 
 	return outArray.toTypedArray()
@@ -130,6 +155,8 @@ private fun bestBuilder(spawn: StructureSpawn, road :Boolean =true): Array<BodyP
 	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
 	val mustHaveCost = mustHave.sumBy{ BODYPART_COST[it]!! }
+
+	val energyInRoom = spawn.room.energyAvailable
 
 	var multiples = (spawn.room.energyCapacityAvailable - mustHaveCost) / bodyCost
 
@@ -161,9 +188,7 @@ private fun spawnCreeps(
 		creeps: Array<Creep>,
 		spawn: StructureSpawn
 ) {
-	var body: Array<BodyPartConstant> = arrayOf<BodyPartConstant>()
-	var role: Role = Role.UNASSIGNED
-	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
+
 
 	//controller must exist if the room has a spawn.
 	if (spawn.room.controller!!.level <2) {
@@ -173,21 +198,24 @@ private fun spawnCreeps(
 		return
 	}
 
+
+
 	if (creeps.count { it.memory.role == Role.HAULER_BASE } < 1){
-		mySpawnCreeps(spawn, Role.HAULER_BASE,bestHauler(spawn))
+		mySpawnCreeps(spawn, Role.HAULER_BASE,bestHaulerBase(spawn))
 		return
 	}
-	if ( creeps.count { it.memory.role == Role.EXTRACTOR } *2 > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
+	if ( creeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
 		mySpawnCreeps(spawn, Role.HAULER_EXTRACTOR,bestHauler(spawn,spawn.room.controller!!.level >= 3))
 		return
 	}
+
+	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
 	if ( creeps.count { it.memory.role == Role.EXTRACTOR }  < numberOfExtractorFlags) {
 		mySpawnCreeps(spawn, Role.EXTRACTOR, bestExtractor(spawn))
 		return
 	}
-//	if ( creeps.count { it.memory.role == Role.BUILDER }  < spawn.room.memory.numberOfBuilders) {
 
-		if ( creeps.count { it.memory.role == Role.BUILDER }  < 5) {
+	if ( creeps.count { it.memory.role == Role.BUILDER }  < 1) {
 		mySpawnCreeps(spawn, Role.BUILDER, bestBuilder(spawn))
 		return
 	}

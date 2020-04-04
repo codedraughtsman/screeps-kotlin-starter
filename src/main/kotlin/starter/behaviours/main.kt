@@ -17,7 +17,10 @@ enum class Behavours {
 	DEPOSIT_ENERGY_IN_NEAREST_STORAGE,
 	BUILD_CONTAINER,
 	HARVEST_FROM_SAVED_SOURCE,
-	PICKUP_FROM_BASE_STORAGE
+	PICKUP_FROM_BASE_STORAGE,
+	REFILL_BUILDERS,
+	PICKUP_FROM_BASE_STORAGE_FORCED,
+	MOVE_OFF_BASE_STORAGE
 
 }
 
@@ -32,8 +35,11 @@ fun Creep.runBehaviour() {
 		}
 	}
 	if (memory.role != Role.HARVESTER) {
-		behaviourRepairWhileMoving()
+		moveOffSourcePos()
 		behaviourBuildWhileMoving()
+
+		behaviourRepairWhileMoving()
+		behaviourUpgradeWhileMoving()
 	}
 }
 
@@ -58,13 +64,14 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	var out: MutableList<Behavours> = arrayListOf()
 	when (role) {
 		Role.HARVESTER -> out = arrayListOf(Behavours.HARVEST_FROM_SAVED_SOURCE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
-		Role.BUILDER -> out = arrayListOf(Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
+		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
 
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
 		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR) //TODO static build and upgrade
 //		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
 		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
-		Role.HAULER_BASE -> out = arrayListOf(Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES)
+		Role.HAULER_BASE -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
+				Behavours.REFILL_BUILDERS)
 
 	}
 	return out
@@ -78,12 +85,15 @@ private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
 		Behavours.PICKUP_FROM_BASE_STORAGE -> isFinished = behaviourPickupFromBaseStorage()
 		Behavours.REFILL_STRUCTURES -> isFinished = behaviourDeposit()
 		Behavours.BUILD -> isFinished = behaviourBuild()
-		Behavours.UPGRADE -> isFinished = upgrade(room.controller!!)
+		Behavours.UPGRADE -> isFinished = behavourUpgrade(room.controller!!)
 		Behavours.HARVEST_EXTRACTOR -> isFinished = behaviourHarvestExtractor()
 		Behavours.HAULER_PICKUP -> isFinished = behaviourHaulerPickup()
 		Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE -> isFinished = behavourDepositEnergyInBaseStorage()
 		Behavours.BUILD_CONTAINER -> isFinished = behaviourBuildContainer()
 		Behavours.HARVEST_FROM_SAVED_SOURCE -> isFinished = behaviourHarvestFromSavedSource()
+		Behavours.REFILL_BUILDERS -> isFinished = behaviourRefillBuilders()
+		Behavours.PICKUP_FROM_BASE_STORAGE_FORCED -> isFinished = behaviourPickupFromBaseStorage(forced=true)
+		Behavours.MOVE_OFF_BASE_STORAGE -> isFinished = moveOffBaseStoragePos()
 
 	}
 	return isFinished
