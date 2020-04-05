@@ -147,10 +147,10 @@ fun Creep.getClosestSourceOfEnergy(): RoomPosition? {
 
 
 fun Creep.getClosestStructureToBuild(includeRoads: Boolean = true): ConstructionSite? {
-	if (includeRoads) {
-		return pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
-	}
-	val sites = room.find(FIND_CONSTRUCTION_SITES).filter { it.structureType != STRUCTURE_ROAD }
+
+	//todo sort by distance
+	val sites = room.find(FIND_CONSTRUCTION_SITES)
+			.filter { (includeRoads || (it.structureType != STRUCTURE_ROAD)) }
 	if (sites .isNullOrEmpty() ){
 		return null
 	}
@@ -206,3 +206,8 @@ fun findNearestFreeExtractorFlag(creep: Creep, creepRole:Role): RoomPosition? {
 	return null
 }
 
+fun isTraversable(pos: RoomPosition): Boolean {
+
+	//todo
+	return true
+}

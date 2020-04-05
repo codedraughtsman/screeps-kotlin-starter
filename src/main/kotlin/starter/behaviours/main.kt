@@ -6,6 +6,8 @@ import screeps.api.FIND_TOMBSTONES
 import screeps.api.RESOURCE_ENERGY
 import starter.*
 
+val DO_BUILD_ENERGY =2000
+
 enum class Behavours {
 	UNDEFINED,
 	GOTO,
@@ -38,10 +40,13 @@ fun Creep.runBehaviour() {
 	}
 	if (memory.role != Role.HARVESTER) {
 		moveOffSourcePos()
-		behaviourBuildWhileMoving()
 
-		behaviourRepairWhileMoving()
-		behaviourUpgradeWhileMoving()
+		//repairing will override the build action so only repair if you don't build
+		if (!behaviourBuildWhileMoving() ) {
+			behaviourRepairWhileMoving()
+		}
+
+//		behaviourUpgradeWhileMoving()
 	}
 }
 
@@ -54,9 +59,17 @@ private fun Creep.globalBehavour() {
 	}
 
 	val resourceToPickup = pos.findInRange(FIND_DROPPED_RESOURCES, 1)
+	val bunker = Bunker(room)
+	val storagePos = bunker.storagePos()
 
 	for (resource in resourceToPickup) {
-		//todo grab the biggest resource available
+		if (storagePos != null
+				&& resource.pos.isEqualTo(storagePos) ) {
+			if (memory.role != Role.HAULER_BASE && bunker.storedEnergy() < DO_BUILD_ENERGY){
+				//don't let the builder start building
+				continue
+			}
+		}
 		val errorCode = pickup(resource)
 	}
 
