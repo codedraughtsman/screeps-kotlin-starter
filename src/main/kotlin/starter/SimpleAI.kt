@@ -96,7 +96,8 @@ private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
 	for (i in 1..multiples) {
 		outArray.add(WORK)
 	}
-	while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable) {
+	while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable
+			&& outArray.filter { it == MOVE }.size < outArray.size/2) {
 		outArray.add(MOVE)
 	}
 	return outArray.toTypedArray()

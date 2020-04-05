@@ -49,7 +49,7 @@ fun Creep.behaviourPickupFromBaseStorage(forced: Boolean =false): Boolean {
 		console.log("behaviourPickupFromBaseStorage: error, main store position is null")
 		return false
 	}
-	val targePos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
+	val targePos = Bunker(room).storagePos()!!
 
 	//todo only the basehauler can pickup energy below 300
 
@@ -128,7 +128,8 @@ fun Creep.behaviourBuildWhileMoving(): Boolean {
 	}
 	var target = room.find(FIND_CONSTRUCTION_SITES)
 			.filter { isInBuildDistance(it.pos, pos) }
-//			.sortedBy {buildPriority(it)  }
+			.sortedBy { pos.getRangeTo(it.pos) }
+			.sortedBy {buildPriority(it)  }
 			.getOrNull(0)
 //	var target = getClosestStructureToBuild()
 	if (target == null) {
@@ -229,7 +230,10 @@ fun Creep.moveOffBaseStoragePos(): Boolean {
 	if (room.memory.bunker.mainStorePos == null) {
 		return false
 	}
-	val p = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
+	val p = Bunker(room).storagePos()
+	if (p ==null ) {
+		return false
+	}
 	if (pos.isEqualTo(p)) {
 		//move in a random direction
 		val directions = getAdjcentSquares(p)
@@ -285,6 +289,11 @@ fun Creep.behaviourDeposit(): Boolean {
 
 fun Creep.behaviourRefillBuilders(): Boolean {
 	//find the closest place to deposit energy in
+	val bunker = Bunker(room)
+	if (bunker.storedEnergy() < 2000) {
+		return false
+	}
+
 	val targets = room.find(FIND_MY_CREEPS)
 			.filter { (it.memory.role == Role.BUILDER) }
 			.filter { (it.carry.energy *4 < it.carryCapacity*3)} // 3/4 of capactiy
