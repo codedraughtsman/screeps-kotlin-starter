@@ -85,7 +85,8 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	var out: MutableList<Behavours> = arrayListOf()
 	when (role) {
 		Role.HARVESTER -> out = arrayListOf(Behavours.HARVEST_FROM_SAVED_SOURCE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
-		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
+		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE,  Behavours.BUILD, Behavours.UPGRADE)
+//		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
 
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
 		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR) //TODO static build and upgrade

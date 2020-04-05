@@ -176,35 +176,6 @@ fun Creep.getStructureInRangeToRepair(): Structure? {
 	return outputStructure
 }
 
-fun findNearestFreeExtractorFlag(creep: Creep, creepRole:Role): RoomPosition? {
-	val flags = creep.pos.lookFor(LOOK_FLAGS)
-	val flagOnSquare = (flags != null &&
-			flags.filter { it.name.startsWith("extractor", true) }.isNotEmpty())
-	if (flagOnSquare) {
-		//we are standing on an extractor flag. lets grab it.
-		return creep.pos
-	}
-
-	val flagPositions = creep.room.find(FIND_FLAGS)
-			.filter { it.name.startsWith("extractor", true) }
-	if (flagPositions.isNullOrEmpty()) {
-		return null
-	}
-
-	//todo sort the flags by distance to creep
-
-	for (flag in flagPositions) {
-		if (Game.creeps.values.count {
-					it.memory.role == creepRole && it.memory.behaviour.targetPos != null
-							&& it.memory.behaviour.targetPos!!.x == flag.pos.x
-							&& it.memory.behaviour.targetPos!!.y == flag.pos.y
-				} == 0) {
-			return flag.pos
-		}
-	}
-
-	return null
-}
 
 fun isTraversable(pos: RoomPosition): Boolean {
 

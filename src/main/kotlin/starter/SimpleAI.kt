@@ -80,7 +80,7 @@ private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {
 
 
 
-private fun bestExtractor(spawn: StructureSpawn): Array<BodyPartConstant> {
+private fun bestExtractor(spawn: StructureSpawn, roadOnly :Boolean =true): Array<BodyPartConstant> {
 	var body = arrayOf<BodyPartConstant>(WORK)
 	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
