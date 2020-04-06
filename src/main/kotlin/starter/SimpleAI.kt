@@ -3,11 +3,13 @@ package starter
 
 import screeps.api.*
 import screeps.api.structures.StructureSpawn
+import screeps.api.structures.StructureTower
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
 import kotlin.math.min
 import starter.behaviours.runBehaviour
+import starter.behaviours.updateTower
 
 fun gameLoop() {
 	val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -15,28 +17,10 @@ fun gameLoop() {
 	//delete memories of creeps that have passed away
 	houseKeeping(Game.creeps)
 
-
 	//make sure we have at least some creeps
 	spawnCreeps(Game.creeps.values, mainSpawn)
 
 
-
-	// build a few extensions so we can have 550 energy
-	val controller = mainSpawn.room.controller
-	if (controller != null && controller.level >= 2) {
-		/*
-		when (controller.room.find(FIND_MY_STRUCTURES).count { it.structureType == STRUCTURE_EXTENSION }) {
-			0 -> controller.room.createConstructionSite(29, 27, STRUCTURE_EXTENSION)
-			1 -> controller.room.createConstructionSite(28, 27, STRUCTURE_EXTENSION)
-			2 -> controller.room.createConstructionSite(27, 27, STRUCTURE_EXTENSION)
-			3 -> controller.room.createConstructionSite(26, 27, STRUCTURE_EXTENSION)
-			4 -> controller.room.createConstructionSite(25, 27, STRUCTURE_EXTENSION)
-			5 -> controller.room.createConstructionSite(24, 27, STRUCTURE_EXTENSION)
-			6 -> controller.room.createConstructionSite(23, 27, STRUCTURE_EXTENSION)
-		}
-		*/
-
-	}
 	for (creep in Game.creeps.values.filter { it.memory.role == Role.HAULER_BASE }) {
 		creep.runBehaviour()
 	}
@@ -46,6 +30,11 @@ fun gameLoop() {
 
 	for ((_, room) in Game.rooms) {
 		room.update()
+	}
+
+	for (structure in Game.structures.values.filter { it-> it.structureType == STRUCTURE_TOWER }) {
+		val tower: StructureTower = structure.unsafeCast<StructureTower>()
+		updateTower(tower)
 	}
 }
 
@@ -198,24 +187,30 @@ private fun spawnCreeps(
 		}
 		return
 	}
+	if (creeps.count() == 0) {
+		//restart bot
+		mySpawnCreeps(spawn, Role.RESCUE_BOT, arrayOf(WORK, MOVE, CARRY))
 
+	}
 
+	val nonOldCreeps = creeps.filter { it.ticksToLive > 300  }
 
-	if (creeps.count { it.memory.role == Role.HAULER_BASE } < 2){
+	if (nonOldCreeps.count { it.memory.role == Role.HAULER_BASE } < 1){
 		mySpawnCreeps(spawn, Role.HAULER_BASE,bestHaulerBase(spawn))
 		return
 	}
-	if ( creeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
+	if ( nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
 		mySpawnCreeps(spawn, Role.HAULER_EXTRACTOR,bestHauler(spawn,spawn.room.controller!!.level >= 3))
 		return
 	}
 
-	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
-	if ( creeps.count { it.memory.role == Role.EXTRACTOR }  < numberOfExtractorFlags) {
+	val numberOfExtractorFlags = Game.flags.values.filter { it.name.startsWith("extractor", true) }.count()
+	if ( nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }  < numberOfExtractorFlags) {
 		mySpawnCreeps(spawn, Role.EXTRACTOR, bestExtractor(spawn))
 		return
 	}
 
+	//note: we dont care about overlap with the builder
 	if ( creeps.count { it.memory.role == Role.BUILDER }  < 1) {
 		mySpawnCreeps(spawn, Role.BUILDER, bestBuilder(spawn))
 		return

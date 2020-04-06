@@ -12,7 +12,8 @@ enum class Role {
 	UPGRADER,
 	EXTRACTOR,
 	HAULER_EXTRACTOR,
-	HAULER_BASE
+	HAULER_BASE,
+	RESCUE_BOT
 }
 
 fun Creep.updateIsCollectingEnergy() {

@@ -4,8 +4,6 @@ import screeps.api.*
 import starter.*
 
 
-
-
 //todo rename
 fun Creep.behaviourHarvestFromSavedSource(): Boolean {
 	if (!isHarvesting()) {
@@ -39,8 +37,8 @@ fun Creep.behaviourHarvestFromSavedSource(): Boolean {
 }
 
 
-fun Creep.behaviourPickupFromBaseStorage(forced: Boolean =false): Boolean {
-	if ( !( forced || isHarvesting())) {
+fun Creep.behaviourPickupFromBaseStorage(forced: Boolean = false): Boolean {
+	if (!(forced || isHarvesting())) {
 //		console.log("behaviourPickupFromBaseStorage is not harvesting")
 		return false
 	}
@@ -62,7 +60,7 @@ fun Creep.behaviourPickupFromBaseStorage(forced: Boolean =false): Boolean {
 	if (pos.isEqualTo(targePos)) {
 		//move off square.
 		//todo make this random
-		val randomPos = room.getPositionAt(pos.x -1, pos.y+1)
+		val randomPos = room.getPositionAt(pos.x - 1, pos.y + 1)
 		moveTo(randomPos!!)
 	}
 
@@ -87,7 +85,7 @@ fun Creep.behaviourPickup(): Boolean {
 		//go and harvest this pos
 		moveTo(targePos)
 		return true
-	} else{
+	} else {
 		//success
 		return true
 		//todo use the move action as well
@@ -96,8 +94,31 @@ fun Creep.behaviourPickup(): Boolean {
 	return false
 }
 
+fun Creep.getClosestStructureToBuild(includeRoads: Boolean = true): ConstructionSite? {
+
+	//todo sort by distance
+	val sites = room.find(FIND_CONSTRUCTION_SITES)
+			.filter { (includeRoads || (it.structureType != STRUCTURE_ROAD)) }
+
+	return sites.getOrNull(0)
+}
+
+//fun isExtractorSite(pos:RoomPosition) {
+//	Game.rooms.get(pos.roomName)
+//	//todo checking
+//	pos.room.find(FIND_FLAGS).any { !it.pos.isEqualTo( pos) }
+//}
+
 fun Creep.behaviourBuild(): Boolean {
-	var target = getClosestStructureToBuild(includeRoads =false)
+	//var target = getClosestStructureToBuild(includeRoads =false)
+
+	var target = room.find(FIND_CONSTRUCTION_SITES)
+			.filter { (it.structureType != STRUCTURE_ROAD) }
+			.filter { it.structureType != STRUCTURE_CONTAINER }
+//			.filter { constructionSite -> !room.find(FIND_FLAGS)
+//					.any {it.name.startsWith("extactor") && it.pos.isEqualTo( constructionSite.pos) }  }
+			.getOrNull(0)
+
 	if (target == null) {
 		//nothing to build
 		return false
@@ -114,36 +135,35 @@ fun Creep.behaviourBuild(): Boolean {
 }
 
 fun Creep.behaviourBuildWhileMoving(): Boolean {
-	console.log("behaviourBuildWhileMoving: for $name at $pos")
+//	console.log("behaviourBuildWhileMoving: for $name at $pos")
 	if (isHarvesting()) {
-		console.log("behaviourBuildWhileMoving: in harvesting mode")
+//		console.log("behaviourBuildWhileMoving: in harvesting mode")
 		//do not build anything while picking up energy.
 		return false
 	}
 
-	if (carry.energy < ((3*carryCapacity)/4)) {
+	if (carry.energy < ((3 * carryCapacity) / 4)) {
 		//only build with the first 1/4 of the energy that it is carrying
-		console.log("behaviourBuildWhileMoving: not carrying enough ")
+//		console.log("behaviourBuildWhileMoving: not carrying enough ")
 		return false
 	}
 	var target = room.find(FIND_CONSTRUCTION_SITES)
 			.filter { isInBuildDistance(it.pos, pos) }
 			.sortedBy { pos.getRangeTo(it.pos) }
-			.sortedBy {buildPriority(it)  }
+			.sortedBy { buildPriority(it) }
 			.getOrNull(0)
 //	var target = getClosestStructureToBuild()
 	if (target == null) {
-		console.log("behaviourBuildWhileMoving: target is null")
+//		console.log("behaviourBuildWhileMoving: target is null")
 		//nothing to build
 		return false
 	}
 	val code = build(target!!)
-	console.log("behaviourBuildWhileMoving: build $target with a code of $code")
+//	console.log("behaviourBuildWhileMoving: build $target with a code of $code")
 
 	if (code == OK) {
 		return true
-	}
-	else if ( code== ERR_NOT_IN_RANGE) {
+	} else if (code == ERR_NOT_IN_RANGE) {
 		console.log("behaviourBuildWhileMoving: tried to build a target that was out of range")
 	}
 
@@ -168,7 +188,7 @@ fun Creep.behaviourUpgradeWhileMoving(): Boolean {
 		return false
 	}
 
-	if (carry.energy < ((3*carryCapacity)/4)) {
+	if (carry.energy < ((3 * carryCapacity) / 4)) {
 		//only build with the first 1/4 of the energy that it is carrying
 		return false
 	}
@@ -192,18 +212,20 @@ fun Creep.behaviourRepairWhileMoving(): Boolean {
 		return false
 	}
 
-	if (carry.energy < ((3*carryCapacity)/4)) {
-//		console.log("behaviourRepairWhileMoving: not carrying enough energy")
+	if (carry.energy < (carryCapacity) / 2) {
+		console.log("behaviourRepairWhileMoving: not carrying enough energy")
 		//only repair with the first 1/4 of the energy that it is carrying
 		return false
 	}
 
 	var target = getStructureInRangeToRepair()
+
 	if (target == null) {
 		//nothing to build
-//		console.log("behaviourRepairWhileMoving: no targets")
+		console.log("behaviourRepairWhileMoving: no targets")
 		return false
 	}
+	console.log("chosen target is $target at ${target.pos}")
 	if (repair(target!!) == ERR_NOT_IN_RANGE) {
 		console.log("behaviourRepairWhileMoving: error, target is not in range. it should be")
 	}
@@ -220,18 +242,19 @@ fun Creep.moveOffSourcePos(): Boolean {
 		val directions = getAdjcentSquares(p)
 //		val index = RandInt()
 		directions.shuffle()
-		val newPos :RoomPosition = directions[0]
+		val newPos: RoomPosition = directions[0]
 		moveTo(newPos)
 
 	}
 	return false
 }
+
 fun Creep.moveOffBaseStoragePos(): Boolean {
 	if (room.memory.bunker.mainStorePos == null) {
 		return false
 	}
 	val p = Bunker(room).storagePos()
-	if (p ==null ) {
+	if (p == null) {
 		return false
 	}
 	if (pos.isEqualTo(p)) {
@@ -239,7 +262,7 @@ fun Creep.moveOffBaseStoragePos(): Boolean {
 		val directions = getAdjcentSquares(p)
 		directions.shuffle()
 //		val index = RandInt()
-		val newPos :RoomPosition = directions[0]
+		val newPos: RoomPosition = directions[0]
 		moveTo(newPos)
 
 	}
@@ -248,12 +271,18 @@ fun Creep.moveOffBaseStoragePos(): Boolean {
 
 fun Creep.behaviourDeposit(): Boolean {
 	//find the closest place to deposit energy in
-	val targets = room.find(FIND_MY_STRUCTURES)
-			.filter { (it.structureType == STRUCTURE_EXTENSION
-					|| it.structureType == STRUCTURE_SPAWN
-					|| it.structureType == STRUCTURE_TOWER) }
+	var targets = room.find(FIND_MY_STRUCTURES)
+			.filter {
+				(it.structureType == STRUCTURE_EXTENSION
+						|| it.structureType == STRUCTURE_SPAWN)
+			}
 			.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
 
+	if (targets.isEmpty()) {
+		targets = room.find(FIND_MY_STRUCTURES)
+				.filter { (it.structureType == STRUCTURE_TOWER) }
+				.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+	}
 
 	if (targets.isNotEmpty()) {
 		var bestPos = targets[0].pos
@@ -276,8 +305,7 @@ fun Creep.behaviourDeposit(): Boolean {
 			//memory.behaviour.gotoPos =memory.behaviour.targetPos
 			moveTo(bestPos)
 			return true
-		}
-		else if (output == OK){
+		} else if (output == OK) {
 			//todo drop energy for builder
 			return true
 		}
@@ -290,13 +318,14 @@ fun Creep.behaviourDeposit(): Boolean {
 fun Creep.behaviourRefillBuilders(): Boolean {
 	//find the closest place to deposit energy in
 	val bunker = Bunker(room)
+	console.log("behaviourRefillBuilders: bunker stored energy is ${bunker.storedEnergy()}")
 	if (bunker.storedEnergy() < 2000) {
 		return false
 	}
 
 	val targets = room.find(FIND_MY_CREEPS)
 			.filter { (it.memory.role == Role.BUILDER) }
-			.filter { (it.carry.energy *4 < it.carryCapacity*3)} // 3/4 of capactiy
+			.filter { (it.carry.energy * 4 < it.carryCapacity * 3) } // 3/4 of capactiy
 
 
 	if (targets.isNotEmpty()) {

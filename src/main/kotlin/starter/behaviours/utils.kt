@@ -8,7 +8,7 @@ import starter.bunker
 import starter.role
 
 fun loadPosFromMemory(targetPos: RoomPosition): RoomPosition {
-	return RoomPosition(targetPos!!.x, targetPos!!.y,targetPos!!.roomName)
+	return RoomPosition(targetPos!!.x, targetPos!!.y, targetPos!!.roomName)
 }
 
 private fun displayErrorCode(errorCode: ScreepsReturnCode, msg: String = "") {
@@ -22,7 +22,7 @@ fun Creep.positionHasEnergy(pos: RoomPosition): Boolean {
 		console.log("Creep.positionHasEnergy")
 		return false
 	}
-	return room.controller!!.level >=2
+	return room.controller!!.level >= 2
 }
 
 /*
@@ -62,14 +62,16 @@ fun Creep.depositEnergyAt(targetPos: RoomPosition): ScreepsReturnCode {
 	}
 
 	//try to transfer to target
-	val targets = room.find(FIND_MY_STRUCTURES).filter { it.pos == targetPos }
-	if (!targets.isNullOrEmpty()) {
-		for (structure in targets) {
-			if (transfer(structure, RESOURCE_ENERGY) == OK) {
-				return OK
-			}
+	val targets = room.find(FIND_MY_STRUCTURES).filter { it.pos.isEqualTo(targetPos) }
+
+	for (structure in targets) {
+		console.log("trying to transfer to ${structure.pos}")
+		if (transfer(structure, RESOURCE_ENERGY) == OK) {
+			console.log("it workes")
+			return OK
 		}
 	}
+
 
 	//it might be a creep
 	val creepTargets = room.find(FIND_MY_CREEPS).filter { it.pos == targetPos }
@@ -81,7 +83,7 @@ fun Creep.depositEnergyAt(targetPos: RoomPosition): ScreepsReturnCode {
 		}
 	}
 
-	if (pos.x == targetPos.x && pos.y == targetPos.y &&pos.roomName == targetPos.roomName) {
+	if (pos.x == targetPos.x && pos.y == targetPos.y && pos.roomName == targetPos.roomName) {
 		drop(RESOURCE_ENERGY)
 	}
 	return ERR_NOT_IN_RANGE
@@ -146,27 +148,17 @@ fun Creep.getClosestSourceOfEnergy(): RoomPosition? {
 }
 
 
-fun Creep.getClosestStructureToBuild(includeRoads: Boolean = true): ConstructionSite? {
-
-	//todo sort by distance
-	val sites = room.find(FIND_CONSTRUCTION_SITES)
-			.filter { (includeRoads || (it.structureType != STRUCTURE_ROAD)) }
-	if (sites .isNullOrEmpty() ){
-		return null
-	}
-	return sites[0]
-}
-fun healthPercentage(creep:Creep): Int {
-	return 100*creep.hits / creep.hitsMax
+fun healthPercentage(creep: Creep): Int {
+	return (100 * creep.hits) / creep.hitsMax
 }
 
 fun Creep.getStructureInRangeToRepair(): Structure? {
-	val structures =  pos.findInRange(FIND_STRUCTURES,3)
+	val structures = pos.findInRange(FIND_STRUCTURES, 3)
 	var leastHitPointsPercentage = Int.MAX_VALUE
-	var outputStructure : Structure? = null
+	var outputStructure: Structure? = null
 
 	for (structure in structures) {
-//		console.log("structure ${structure.structureType }at ${structure.pos} has ${structure.hitsMax} hitMax, and ${structure.hits} hits")
+		console.log("structure ${structure.structureType }at ${structure.pos} has ${structure.hitsMax} hitMax, and ${structure.hits} hits")
 		val hitPointsLeftPercentage = healthPercentage(this)
 		if (hitPointsLeftPercentage < leastHitPointsPercentage) {
 			leastHitPointsPercentage = hitPointsLeftPercentage

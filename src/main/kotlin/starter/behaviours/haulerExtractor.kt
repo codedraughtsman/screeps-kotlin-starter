@@ -7,18 +7,33 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 	if (isHarvesting()){
 		return false
 	}
-	if (room.memory.bunker.mainStorePos== null) {
+
+	val flag = Game.flags.values.filter { it.name.startsWith("base") }
+			//.sortedBy {  movedistance}
+			.getOrNull(0)
+
+	if (flag == null){
+		console.log("behavourDepositEnergyInBaseStorage: error no valid base flags found for entire game")
+		return false
+	}
+	val baseRoom = flag.room!!
+
+
+
+	if (baseRoom.memory.bunker.mainStorePos== null) {
 		console.log("behavourDepositEnergyInBaseStorage, error, no main storage pos set")
 		return false
 	}
 	//todo what if the storage is full? should it be deposited some where else?
 	//val targetPos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
-	val targetPos = Bunker(room).storagePos()
+
+
+	val targetPos = Bunker(baseRoom).storagePos()
 	if (targetPos == null) {
 		console.log("invalid pos in behavourDepositEnergyInBaseStorage")
 		return false
 	}
-
+	console.log("trying to depost ")
 	if (depositEnergyAt(targetPos) == ERR_NOT_IN_RANGE) {
 		moveTo(targetPos)
 		return true

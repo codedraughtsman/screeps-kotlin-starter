@@ -1,6 +1,7 @@
 package starter
 
 import screeps.api.*
+import screeps.api.structures.StructureStorage
 import starter.behaviours.isTraversable
 import starter.behaviours.loadPosFromMemory
 
@@ -19,6 +20,7 @@ class Bunker (val room: Room) {
 			return storePos
 		}
 	//hack
+		console.log("Bunker.storagePos: using altenate position")
 		return room.getPositionAt(storePos.x +1, storePos.y)
 		//use the backup store pos.
 		val adjcent = getAdjcentSquares(storePos).filter { isTraversable(it) }
@@ -42,6 +44,15 @@ class Bunker (val room: Room) {
 			if (drop.resourceType == RESOURCE_ENERGY) {
 				storedEnergy += drop.amount
 			}
+		}
+
+//		val storage = targetPos.findInRange(FIND_MY_STRUCTURES,0)
+//				.filter { it.structureType == STRUCTURE_STORAGE}
+//		for (store in storage) {
+//			storedEnergy +=  store.unsafeCast<EnergyContainer>().energy
+//		}
+		for (store in room.find(FIND_MY_STRUCTURES).filter { it.structureType == STRUCTURE_STORAGE}){
+			storedEnergy +=  store.unsafeCast<StructureStorage>().store.energy
 		}
 
 

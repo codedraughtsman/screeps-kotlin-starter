@@ -27,32 +27,20 @@ fun Room.updateHeatmap() {
 	}
 	for (creep in this.find(FIND_MY_CREEPS)) {
 		if (creep.fatigue > 0) {
-			/*
-			console.log("adding fatigue to ${creep.pos.x}, ${creep.pos.y} ")
-			//console.log("main object ${memory.heatmap} ")
-			//val casted = memory.heatmap.unsafeCast<Array<IntArray>>()
-			val casted : Array<IntArray> = memory.heatmap.unsafeCast<Array<IntArray>>()
-			val myArr : Array<IntArray> = Array(50, {IntArray(50) { 0} })
-
-			console.log("myArr main object ${myArr} ")
-			console.log( "bool is ${memory.heatmapIsDirty}")
-			console.log( "memory.arr is ${memory.arr}")
-			console.log( "memory.person is ${memory.person}")
-			console.log( "memory.person is ${memory.person.name}")
-			console.log( "memory.heat is ${memory.heat}")
-			console.log( "memory.heat.map is ${memory.heat.map}")
-			console.log( "memory.heat.map[0] is ${memory.heat.map[0]}")
-			console.log( "memory.heat.map[0][0] is ${memory.heat.map[0][0]}")
-*/
-
-
 			memory.heat.map[creep.pos.x][creep.pos.y] += 1
 //			if (memory.heat.map[creep.pos.x][creep.pos.y] > memory.heat.buildRoadLimit){
-			if (controller != null && controller!!.level >= memory.minControlLevelBeforeBuildingRoads && memory.heat.map[creep.pos.x][creep.pos.y] > 30){
+			if (controller != null
+					&& controller!!.level >= memory.minControlLevelBeforeBuildingRoads
+					&& memory.heat.map[creep.pos.x][creep.pos.y] > 30){
 
 				createConstructionSite(creep.pos, STRUCTURE_ROAD)
 				console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
 
+			} else { //there is no controller
+				if ( memory.heat.map[creep.pos.x][creep.pos.y] > 30){
+					createConstructionSite(creep.pos, STRUCTURE_ROAD)
+					console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
+				}
 			}
 		}
 	}
