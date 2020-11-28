@@ -43,7 +43,7 @@ fun findNearestFreeExtractorFlag(creep: Creep, creepRole: Role): RoomPosition? {
 
 
 fun Creep.behaviourHarvestExtractor(): Boolean {
-	console.log("running behaviourHarvestExtractor, target pos is ${memory.behaviour.targetPos}");
+//	console.log("running behaviourHarvestExtractor, target pos is ${memory.behaviour.targetPos}");
 	if (memory.behaviour.targetPos == null) {
 		console.log("finding a new target for extractor.")
 		memory.behaviour.targetPos = findNearestFreeExtractorFlag(this, Role.EXTRACTOR)
@@ -52,7 +52,7 @@ fun Creep.behaviourHarvestExtractor(): Boolean {
 			return false
 		}
 	}
-	console.log("target pos is now ${memory.behaviour.targetPos}")
+//	console.log("target pos is now ${memory.behaviour.targetPos}")
 
 	val targetPos = loadPosFromMemory(memory.behaviour.targetPos!!)
 

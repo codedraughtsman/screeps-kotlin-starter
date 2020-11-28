@@ -141,26 +141,26 @@ fun buildPriority(structure: ConstructionSite): Int {
 
 }
 fun Creep.behaviourBuildWhileMoving(): Boolean {
-	console.log("calling behaviourBuildWhileMoving")
+//	console.log("calling behaviourBuildWhileMoving")
 //	console.log("behaviourBuildWhileMoving: for $name at $pos")
 	if (isHarvesting()) {
-		console.log("behaviourBuildWhileMoving: in harvesting mode")
+//		console.log("behaviourBuildWhileMoving: in harvesting mode")
 		//do not build anything while picking up energy.
 		return false
 	}
 
 	if (carry.energy < ((3 * carryCapacity) / 4)) {
 		//only build with the first 1/4 of the energy that it is carrying
-		console.log("behaviourBuildWhileMoving: not carrying enough ")
+//		console.log("behaviourBuildWhileMoving: not carrying enough ")
 		return false
 	}
-	console.log("apple")
+//	console.log("apple")
 	var sortedTargets = room.find(FIND_CONSTRUCTION_SITES)
 			.filter { isInBuildDistance(it.pos, pos) }
 			.sortedBy { buildPriority(it) }.reversed()
 			.sortedBy {it.progressTotal- it.progress}
 
-	console.log("targets are: ${sortedTargets}")
+//	console.log("targets are: ${sortedTargets}")
 
 	var target = sortedTargets
 			.getOrNull(0)
@@ -174,10 +174,10 @@ fun Creep.behaviourBuildWhileMoving(): Boolean {
 //	console.log("behaviourBuildWhileMoving: build $target with a code of $code")
 
 	if (code == OK) {
-		console.log("build it $target \n")
+//		console.log("build it $target \n")
 		return true
 	} else if (code == ERR_NOT_IN_RANGE) {
-		console.log("behaviourBuildWhileMoving: tried to build a target that was out of range")
+//		console.log("behaviourBuildWhileMoving: tried to build a target that was out of range")
 	}
 
 	return false

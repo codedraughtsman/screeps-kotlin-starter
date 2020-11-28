@@ -1,6 +1,7 @@
 package starter.behaviours
 
 import screeps.api.*
+import screeps.api.structures.StructureExtension
 import starter.*
 
 fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
@@ -75,6 +76,16 @@ private fun findNearestExtractorThatNeedAHauler(creep: Creep): RoomPosition? {
 	return leastPos
 }
 
+fun Creep.behavourFillUpAdjcentExtentions() : Boolean {
+	var targets = pos.findInRange(FIND_MY_STRUCTURES,1).filter { it.structureType == STRUCTURE_EXTENSION }
+			.filter{var x:StructureExtension =it as StructureExtension; return x.energy < x.energyCapacity }
+
+	//now select one
+	if (! targets.isNullOrEmpty()) {
+		depositEnergyAt(targets[0].pos)
+	}
+	return false
+}
 
 fun Creep.behaviourHaulerPickup(): Boolean {
 	if (!isHarvesting()){
@@ -95,10 +106,17 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 //		return true
 //	}
 
-	if (pickupEnergyFromPosition(targetPos) != OK) {
+	if (pos.inRangeTo( targetPos, 1)){
+		console.log("trying to pickup energy from ${targetPos}")
+		pickupEnergyFromPosition(targetPos)
+	}else {
 		moveTo(targetPos)
-		//console.log("behaviourHaulerPickup: error, failed to harvest energy from $targetPos ")
 	}
+//
+//	if (pickupEnergyFromPosition(pos) != OK) {
+//		moveTo(targetPos)
+//		//console.log("behaviourHaulerPickup: error, failed to harvest energy from $targetPos ")
+//	}
 
 	return false
 }

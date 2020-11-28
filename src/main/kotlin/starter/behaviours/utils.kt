@@ -2,10 +2,8 @@ package starter.behaviours
 
 import screeps.api.*
 import screeps.api.structures.Structure
-import starter.Role
-import starter.behaviour
-import starter.bunker
-import starter.role
+import screeps.api.structures.StructureContainer
+import starter.*
 
 fun loadPosFromMemory(targetPos: RoomPosition): RoomPosition {
 	return RoomPosition(targetPos!!.x, targetPos!!.y, targetPos!!.roomName)
@@ -25,6 +23,27 @@ fun Creep.positionHasEnergy(pos: RoomPosition): Boolean {
 	return room.controller!!.level >= 2
 }
 
+
+fun Creep.behavourBuildInRange() :Boolean {
+	var target = pos.findInRange(FIND_CONSTRUCTION_SITES, 3)
+//	var target = room.find(FIND_CONSTRUCTION_SITES)
+			.filter { (it.structureType != STRUCTURE_ROAD) }
+			.sortedBy { buildPriority(it) }
+			.getOrNull(0)
+
+	if (target == null) {
+		//nothing to build
+		return false
+	}
+	if (build(target!!) == ERR_NOT_IN_RANGE) {
+		return true
+	} else {
+		return true
+	}
+
+	return false
+}
+
 fun Creep.behavourPickUpEnergyFromTarget() : Boolean {
 	return false
 }
@@ -32,9 +51,36 @@ fun Creep.behavourPickUpEnergyFromTarget() : Boolean {
 fun Creep.behavourSetTarget_GetEnergyFromCollectors() :Boolean {
 	//find the closest collector that has energy.
 	//order by energythatcan be picked up divided by trip distance
+	var	struct= Game.structures.values.filter { it.structureType == STRUCTURE_CONTAINER }
+	var containers: MutableList<StructureContainer> = mutableListOf()
+	for (structure in struct) {
+		containers.add(structure as StructureContainer)
+	}
+
+	//we just care about getting the energy to the store as quickly as possiable.
+
+	//sortby energy on pos.
+//	containers.sortBy { it.store }
+
 	return false
 }
 
+fun Creep.behavourPickupAdjcentResouces() : Boolean {
+	val resourceToPickup = pos.findInRange(FIND_DROPPED_RESOURCES, 1)
+	val bunker = Bunker(room)
+	val storagePos = bunker.storagePos()
+	for (resource in resourceToPickup) {
+		if (storagePos != null
+				&& resource.pos.isEqualTo(storagePos) ) {
+			if (memory.role != Role.HAULER_BASE && bunker.storedEnergy() < DO_BUILD_ENERGY){
+				//don't let the builder start building
+				continue
+			}
+		}
+		val errorCode = pickup(resource)
+	}
+	return false
+}
 
 /*
 picks up any of the energy from storage OR mines it if is a source.
@@ -42,22 +88,26 @@ picks up any of the energy from storage OR mines it if is a source.
 fun Creep.pickupEnergyFromPosition(targetPos: RoomPosition): ScreepsReturnCode {
 
 
+	val structures = targetPos.findInRange(FIND_STRUCTURES, 0)
+//	console.log("found structures are ${structures} count is ${structures.count()}")
+	if (!structures.isNullOrEmpty()) {
+		val containers = structures.filter { it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE }
+		for (container in containers) {
+//			console.log("withdrawing energy from ${targetPos}")
+			withdraw(container, RESOURCE_ENERGY)
+		}
+	}
+
 	val resourceToPickup = targetPos.findInRange(FIND_DROPPED_RESOURCES, 1)
 
 	for (resource in resourceToPickup) {
 		if (pickup(resource) == OK) {
-			return OK
+
 		}
 	}
 
 
-	val structures = targetPos.findInRange(FIND_MY_STRUCTURES, 1)
-	if (!structures.isNullOrEmpty()) {
-		val containers = structures.filter { it.structureType == STRUCTURE_CONTAINER || it.structureType == STRUCTURE_STORAGE }
-		if (containers.isNotEmpty()) {
-			return withdraw(containers[0], RESOURCE_ENERGY)
-		}
-	}
+
 
 	val sources = targetPos.findInRange(FIND_SOURCES_ACTIVE, 1)
 	if (!sources.isNullOrEmpty()) {
@@ -169,7 +219,7 @@ fun Creep.getStructureInRangeToRepair(): Structure? {
 	var outputStructure: Structure? = null
 
 	for (structure in structures) {
-		console.log("structure ${structure.structureType }at ${structure.pos} has ${structure.hitsMax} hitMax, and ${structure.hits} hits")
+//		console.log("structure ${structure.structureType }at ${structure.pos} has ${structure.hitsMax} hitMax, and ${structure.hits} hits")
 		val hitPointsLeftPercentage = healthPercentage(this)
 		if (hitPointsLeftPercentage < leastHitPointsPercentage) {
 			leastHitPointsPercentage = hitPointsLeftPercentage

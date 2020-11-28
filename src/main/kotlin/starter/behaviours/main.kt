@@ -24,7 +24,9 @@ enum class Behavours {
 	PICKUP_FROM_BASE_STORAGE,
 	REFILL_BUILDERS,
 	PICKUP_FROM_BASE_STORAGE_FORCED,
-	MOVE_OFF_BASE_STORAGE
+	MOVE_OFF_BASE_STORAGE,
+	BUILD_IN_RANGE,
+	PICKUP_ADJECENT_RESOURCES
 
 }
 
@@ -84,6 +86,7 @@ private fun Creep.globalBehavour() {
 		val errorCode = withdraw(tomb, RESOURCE_ENERGY)
 	}
 
+	behavourFillUpAdjcentExtentions()
 }
 
 private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
@@ -94,7 +97,7 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 //		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
 
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
-		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR) //TODO static build and upgrade
+		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR, Behavours.BUILD_IN_RANGE, Behavours.PICKUP_ADJECENT_RESOURCES) //TODO static build and upgrade
 //		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
 		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
 		Role.HAULER_BASE -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
@@ -123,6 +126,8 @@ private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
 		Behavours.REFILL_BUILDERS -> isFinished = behaviourRefillBuilders()
 		Behavours.PICKUP_FROM_BASE_STORAGE_FORCED -> isFinished = behaviourPickupFromBaseStorage(forced=true)
 		Behavours.MOVE_OFF_BASE_STORAGE -> isFinished = moveOffBaseStoragePos()
+		Behavours.BUILD_IN_RANGE -> isFinished = behavourBuildInRange()
+		Behavours.PICKUP_ADJECENT_RESOURCES -> isFinished = behavourPickupAdjcentResouces()
 
 	}
 	return isFinished
