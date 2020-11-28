@@ -6,6 +6,7 @@ import starter.behaviour
 import starter.role
 
 fun findNearestFreeExtractorFlag(creep: Creep, creepRole: Role): RoomPosition? {
+	console.log("creep pos is ${creep.pos}");
 	val flags = creep.pos.lookFor(LOOK_FLAGS)
 	val flagOnSquare = (flags != null &&
 			flags.any { it.name.startsWith("extractor", true) })
@@ -42,15 +43,16 @@ fun findNearestFreeExtractorFlag(creep: Creep, creepRole: Role): RoomPosition? {
 
 
 fun Creep.behaviourHarvestExtractor(): Boolean {
-
+	console.log("running behaviourHarvestExtractor, target pos is ${memory.behaviour.targetPos}");
 	if (memory.behaviour.targetPos == null) {
-
+		console.log("finding a new target for extractor.")
 		memory.behaviour.targetPos = findNearestFreeExtractorFlag(this, Role.EXTRACTOR)
 		if (memory.behaviour.targetPos == null) {
 			console.log("behaviourHarvestExtractor: error, could not find a free extractor flag")
 			return false
 		}
 	}
+	console.log("target pos is now ${memory.behaviour.targetPos}")
 
 	val targetPos = loadPosFromMemory(memory.behaviour.targetPos!!)
 

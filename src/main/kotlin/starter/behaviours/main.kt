@@ -29,24 +29,29 @@ enum class Behavours {
 }
 
 fun Creep.runBehaviour() {
+	try {
 	updateIsCollectingEnergy()
 	globalBehavour()
 	var behavours = getBehavioursForRole(memory.role as Role)
-	for (behaviour in behavours) {
-		val isFinshed = runTheBehaviour(behaviour)
-		if (isFinshed) {
-			break
-		}
-	}
-	if (memory.role != Role.HARVESTER) {
-		moveOffSourcePos()
 
-		//repairing will override the build action so only repair if you don't build
-		if (!behaviourBuildWhileMoving() ) {
-			behaviourRepairWhileMoving()
+		for (behaviour in behavours) {
+			val isFinshed = runTheBehaviour(behaviour)
+			if (isFinshed) {
+				break
+			}
 		}
+		if (memory.role != Role.HARVESTER) {
+			moveOffSourcePos()
 
-		behaviourUpgradeWhileMoving()
+			//repairing will override the build action so only repair if you don't build
+			if (!behaviourBuildWhileMoving()) {
+				behaviourRepairWhileMoving()
+			}
+
+			behaviourUpgradeWhileMoving()
+		}
+	}catch (e: Error){
+		//stop the error doing anything else
 	}
 }
 
@@ -93,9 +98,9 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 //		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
 		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
 		Role.HAULER_BASE -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
-				Behavours.REFILL_BUILDERS, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
+				Behavours.REFILL_BUILDERS ) //Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE
 		Role.RESCUE_BOT -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
-				Behavours.REFILL_BUILDERS, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
+				Behavours.REFILL_BUILDERS, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.HAULER_PICKUP)
 
 	}
 	return out

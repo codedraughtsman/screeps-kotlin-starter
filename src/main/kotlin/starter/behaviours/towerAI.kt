@@ -1,9 +1,6 @@
 package starter.behaviours
 
-import screeps.api.FIND_HOSTILE_CREEPS
-import screeps.api.FIND_STRUCTURES
-import screeps.api.Room
-import screeps.api.STRUCTURE_RAMPART
+import screeps.api.*
 import screeps.api.structures.Structure
 import screeps.api.structures.StructureTower
 
@@ -23,7 +20,9 @@ fun attackAnything(tower: StructureTower) {
 
 	val repairTarget : Structure? = room.find(FIND_STRUCTURES)
 			.filter { 4*it.hits < it.hitsMax }
-			.filter {it.structureType != STRUCTURE_RAMPART || it.hits < 2000 }
+			.filter {(it.structureType != STRUCTURE_RAMPART
+					&& it.structureType != STRUCTURE_WALL)
+					|| it.hits < 2000 }
 			.sortedBy { it.hits }
 			.getOrNull(0)
 	if (repairTarget != null) {

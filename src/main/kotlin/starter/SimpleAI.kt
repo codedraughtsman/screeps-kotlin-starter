@@ -10,6 +10,8 @@ import screeps.utils.unsafe.jsObject
 import kotlin.math.min
 import starter.behaviours.runBehaviour
 import starter.behaviours.updateTower
+import starter.Bunker
+import starter.behaviours.DO_BUILD_ENERGY
 
 fun gameLoop() {
 	val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -179,6 +181,10 @@ private fun spawnCreeps(
 		spawn: StructureSpawn
 ) {
 
+//	if (creeps.count { it.memory.role == Role.HARVESTER } < 3) {
+//		mySpawnCreeps(spawn, Role.HARVESTER, arrayOf<BodyPartConstant>(WORK, CARRY, MOVE))
+//	}
+//	return
 
 	//controller must exist if the room has a spawn.
 	if (spawn.room.controller!!.level <2) {
@@ -187,10 +193,16 @@ private fun spawnCreeps(
 		}
 		return
 	}
-	if (creeps.count() == 0) {
+	if (creeps.count() == 0 || creeps.count {it.memory.role == Role.HAULER_EXTRACTOR } ==0 || creeps.count {it.memory.role == Role.EXTRACTOR } ==0 ) {
 		//restart bot
-		mySpawnCreeps(spawn, Role.RESCUE_BOT, arrayOf(WORK, MOVE, CARRY))
-
+		if (creeps.count { it.memory.role == Role.RESCUE_BOT } == 0) {
+			mySpawnCreeps(spawn, Role.RESCUE_BOT, arrayOf(WORK, MOVE, CARRY))
+		return
+		}
+		if (creeps.count { it.memory.role == Role.HARVESTER } < 3) {
+			mySpawnCreeps(spawn, Role.HARVESTER, arrayOf<BodyPartConstant>(WORK, CARRY, MOVE))
+			return
+		}
 	}
 
 	val nonOldCreeps = creeps.filter { it.ticksToLive > 300  }
@@ -211,9 +223,13 @@ private fun spawnCreeps(
 	}
 
 	//note: we dont care about overlap with the builder
-	if ( creeps.count { it.memory.role == Role.BUILDER }  < 1) {
-		mySpawnCreeps(spawn, Role.BUILDER, bestBuilder(spawn))
-		return
+	if ( Bunker(spawn.room).storedEnergy() > DO_BUILD_ENERGY) {
+		//todo only if there are construction sites build a builder.
+		if (creeps.count { it.memory.role == Role.BUILDER } < 2 ) {
+			mySpawnCreeps(spawn, Role.BUILDER, bestBuilder(spawn))
+			return
+		}
+		//depositor spawn
 	}
 
 

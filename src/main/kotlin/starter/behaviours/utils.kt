@@ -25,6 +25,17 @@ fun Creep.positionHasEnergy(pos: RoomPosition): Boolean {
 	return room.controller!!.level >= 2
 }
 
+fun Creep.behavourPickUpEnergyFromTarget() : Boolean {
+	return false
+}
+
+fun Creep.behavourSetTarget_GetEnergyFromCollectors() :Boolean {
+	//find the closest collector that has energy.
+	//order by energythatcan be picked up divided by trip distance
+	return false
+}
+
+
 /*
 picks up any of the energy from storage OR mines it if is a source.
  */
@@ -65,7 +76,7 @@ fun Creep.depositEnergyAt(targetPos: RoomPosition): ScreepsReturnCode {
 	val targets = room.find(FIND_MY_STRUCTURES).filter { it.pos.isEqualTo(targetPos) }
 
 	for (structure in targets) {
-		console.log("trying to transfer to ${structure.pos}")
+//		console.log("trying to transfer to ${structure.pos}")
 		if (transfer(structure, RESOURCE_ENERGY) == OK) {
 			console.log("it workes")
 			return OK

@@ -35,6 +35,7 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 	}
 	console.log("trying to depost ")
 	if (depositEnergyAt(targetPos) == ERR_NOT_IN_RANGE) {
+//		drop(RESOURCE_ENERGY)
 		moveTo(targetPos)
 		return true
 	}
@@ -74,6 +75,7 @@ private fun findNearestExtractorThatNeedAHauler(creep: Creep): RoomPosition? {
 	return leastPos
 }
 
+
 fun Creep.behaviourHaulerPickup(): Boolean {
 	if (!isHarvesting()){
 		return false
@@ -85,7 +87,7 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 			return false
 		}
 	}
-
+	console.log("this is creep ${this.name}")
 	val targetPos = loadPosFromMemory(memory.behaviour.sourcePos!!)
 //	if (pos != targetPos) {
 //		//todo never actually stand on the flag because it will block the extractor

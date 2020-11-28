@@ -133,24 +133,36 @@ fun Creep.behaviourBuild(): Boolean {
 
 	return false
 }
+fun buildPriority(structure: ConstructionSite): Int {
+	if (structure == STRUCTURE_ROAD) {
+		return 1;
+	}
+	return 0
 
+}
 fun Creep.behaviourBuildWhileMoving(): Boolean {
+	console.log("calling behaviourBuildWhileMoving")
 //	console.log("behaviourBuildWhileMoving: for $name at $pos")
 	if (isHarvesting()) {
-//		console.log("behaviourBuildWhileMoving: in harvesting mode")
+		console.log("behaviourBuildWhileMoving: in harvesting mode")
 		//do not build anything while picking up energy.
 		return false
 	}
 
 	if (carry.energy < ((3 * carryCapacity) / 4)) {
 		//only build with the first 1/4 of the energy that it is carrying
-//		console.log("behaviourBuildWhileMoving: not carrying enough ")
+		console.log("behaviourBuildWhileMoving: not carrying enough ")
 		return false
 	}
-	var target = room.find(FIND_CONSTRUCTION_SITES)
+	console.log("apple")
+	var sortedTargets = room.find(FIND_CONSTRUCTION_SITES)
 			.filter { isInBuildDistance(it.pos, pos) }
-			.sortedBy { pos.getRangeTo(it.pos) }
-			.sortedBy { buildPriority(it) }
+			.sortedBy { buildPriority(it) }.reversed()
+			.sortedBy {it.progressTotal- it.progress}
+
+	console.log("targets are: ${sortedTargets}")
+
+	var target = sortedTargets
 			.getOrNull(0)
 //	var target = getClosestStructureToBuild()
 	if (target == null) {
@@ -162,6 +174,7 @@ fun Creep.behaviourBuildWhileMoving(): Boolean {
 //	console.log("behaviourBuildWhileMoving: build $target with a code of $code")
 
 	if (code == OK) {
+		console.log("build it $target \n")
 		return true
 	} else if (code == ERR_NOT_IN_RANGE) {
 		console.log("behaviourBuildWhileMoving: tried to build a target that was out of range")
@@ -170,13 +183,7 @@ fun Creep.behaviourBuildWhileMoving(): Boolean {
 	return false
 }
 
-fun buildPriority(structure: ConstructionSite): Int {
-	if (structure == STRUCTURE_ROAD) {
-		return 1;
-	}
-	return 0
 
-}
 
 fun isInBuildDistance(pos1: RoomPosition, pos2: RoomPosition): Boolean {
 	return pos1.inRangeTo(pos2, 3)
@@ -257,6 +264,7 @@ fun Creep.moveOffBaseStoragePos(): Boolean {
 	if (p == null) {
 		return false
 	}
+	console.log("move off base storage bunker ${p} creep ${pos}")
 	if (pos.isEqualTo(p)) {
 		//move in a random direction
 		val directions = getAdjcentSquares(p)
@@ -319,7 +327,7 @@ fun Creep.behaviourRefillBuilders(): Boolean {
 	//find the closest place to deposit energy in
 	val bunker = Bunker(room)
 	console.log("behaviourRefillBuilders: bunker stored energy is ${bunker.storedEnergy()}")
-	if (bunker.storedEnergy() < 2000) {
+	if (bunker.storedEnergy() < room.energyCapacityAvailable *3) {
 		return false
 	}
 
