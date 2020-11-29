@@ -44,6 +44,19 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 
 }
 
+fun Creep.behavourRepairInRange() : Boolean {
+	var targets = pos.findInRange(FIND_STRUCTURES, 3)
+			.filter { it.hits != it.hitsMax }
+			.sortedBy { it.hits/it.hitsMax }
+//			.sortedBy { if (it.structureType == STRUCTURE_ROAD) return 1; return 0 }
+	for (target in targets) {
+		if (repair(target)== OK) {
+			return true
+		}
+	}
+	return false
+}
+
 private fun findNearestExtractorThatNeedAHauler(creep: Creep): RoomPosition? {
 	val extractorCreeps = Game.creeps.values.filter { it.memory.role == Role.EXTRACTOR }
 	val haulerCreeps = Game.creeps.values.filter { it.memory.role == Role.HAULER_EXTRACTOR }
@@ -109,6 +122,7 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 	if (pos.inRangeTo( targetPos, 1)){
 		console.log("trying to pickup energy from ${targetPos}")
 		pickupEnergyFromPosition(targetPos)
+		memory.isCollectingEnergy = false
 	}else {
 		moveTo(targetPos)
 	}

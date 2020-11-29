@@ -8,6 +8,11 @@ import starter.*
 
 val DO_BUILD_ENERGY =2000
 
+enum class BehavourReturn {
+	STOP_RUNNING,
+	CONTINUE_RUNNING
+}
+
 enum class Behavours {
 	UNDEFINED,
 	GOTO,
@@ -26,7 +31,8 @@ enum class Behavours {
 	PICKUP_FROM_BASE_STORAGE_FORCED,
 	MOVE_OFF_BASE_STORAGE,
 	BUILD_IN_RANGE,
-	PICKUP_ADJECENT_RESOURCES
+	PICKUP_ADJECENT_RESOURCES,
+	REPAIR_IN_RANGE
 
 }
 
@@ -59,6 +65,7 @@ fun Creep.runBehaviour() {
 
 private fun Creep.globalBehavour() {
 	updateIsCollectingEnergy()
+
 
 	if (memory.role == Role.HAULER_EXTRACTOR ||
 			memory.role == Role.EXTRACTOR){
@@ -93,14 +100,14 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	var out: MutableList<Behavours> = arrayListOf()
 	when (role) {
 		Role.HARVESTER -> out = arrayListOf(Behavours.HARVEST_FROM_SAVED_SOURCE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
-		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE,Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD,  Behavours.UPGRADE)
+		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.REPAIR_IN_RANGE, Behavours.UPGRADE)
 //		Role.BUILDER -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.BUILD, Behavours.UPGRADE)
 
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
-		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR, Behavours.BUILD_IN_RANGE, Behavours.PICKUP_ADJECENT_RESOURCES) //TODO static build and upgrade
+		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR, Behavours.BUILD_IN_RANGE, Behavours.REPAIR_IN_RANGE, Behavours.PICKUP_ADJECENT_RESOURCES) //TODO static build and upgrade
 //		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
-		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
-		Role.HAULER_BASE -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
+		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.REPAIR_IN_RANGE, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
+		Role.HAULER_BASE -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.REPAIR_IN_RANGE,
 				Behavours.REFILL_BUILDERS ) //Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE
 		Role.RESCUE_BOT -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
 				Behavours.REFILL_BUILDERS, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.HAULER_PICKUP)
@@ -128,6 +135,7 @@ private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
 		Behavours.MOVE_OFF_BASE_STORAGE -> isFinished = moveOffBaseStoragePos()
 		Behavours.BUILD_IN_RANGE -> isFinished = behavourBuildInRange()
 		Behavours.PICKUP_ADJECENT_RESOURCES -> isFinished = behavourPickupAdjcentResouces()
+		Behavours.REPAIR_IN_RANGE -> isFinished =behavourBuildInRange()
 
 	}
 	return isFinished
