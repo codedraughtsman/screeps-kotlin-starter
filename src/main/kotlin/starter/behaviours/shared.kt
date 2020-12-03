@@ -2,13 +2,15 @@ package starter.behaviours
 
 import screeps.api.*
 import starter.*
+import starter.multiAI.Role
+
 
 
 //todo rename
-fun Creep.behaviourHarvestFromSavedSource(): Boolean {
+fun Creep.behaviourHarvestFromSavedSource(): BehavourReturn {
 	if (!isHarvesting()) {
 		//do not need energy right now.
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 
 	if (memory.behaviour.sourcePos == null) {
@@ -18,7 +20,7 @@ fun Creep.behaviourHarvestFromSavedSource(): Boolean {
 		if (source == null) {
 			//getClosestSourceOfEnergy has failed
 			console.log("behaviourHarvestFromSavedSource: error failed to find a source")
-			return false
+			return BehavourReturn.CONTINUE_RUNNING
 		}
 		memory.behaviour.sourcePos = source.pos
 	}
@@ -27,25 +29,26 @@ fun Creep.behaviourHarvestFromSavedSource(): Boolean {
 	if (pickupEnergyFromPosition(targetPos) == ERR_NOT_IN_RANGE) {
 		//go and harvest this pos
 		moveTo(targetPos)
-		return true
+		return BehavourReturn.STOP_RUNNING
 	}
 	//todo update isharvesting()?
 
 	updateIsCollectingEnergy()
 	//if we are still harvesting then don't move
-	return isHarvesting()
+	if (isHarvesting()){ return BehavourReturn.STOP_RUNNING }
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
 
-fun Creep.behaviourPickupFromBaseStorage(forced: Boolean = false): Boolean {
+fun Creep.behaviourPickupFromBaseStorage(forced: Boolean = false): BehavourReturn {
 	if (!(forced || isHarvesting())) {
 //		console.log("behaviourPickupFromBaseStorage is not harvesting")
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 
 	if (room.memory.bunker.mainStorePos == null) {
 		console.log("behaviourPickupFromBaseStorage: error, main store position is null")
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	val targePos = Bunker(room).storagePos()!!
 
@@ -54,7 +57,7 @@ fun Creep.behaviourPickupFromBaseStorage(forced: Boolean = false): Boolean {
 	if (pickupEnergyFromPosition(targePos) == ERR_NOT_IN_RANGE) {
 		if (!pos.isNearTo(targePos)) {
 			moveTo(targePos)
-			return true
+			return BehavourReturn.STOP_RUNNING
 		}
 	}
 	if (pos.isEqualTo(targePos)) {
@@ -64,34 +67,34 @@ fun Creep.behaviourPickupFromBaseStorage(forced: Boolean = false): Boolean {
 		moveTo(randomPos!!)
 	}
 
-	return true
+	return BehavourReturn.STOP_RUNNING
 }
 
 
-fun Creep.behaviourPickup(): Boolean {
+fun Creep.behaviourPickup(): BehavourReturn {
 	if (!isHarvesting()) {
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 
 	if (memory.behaviour.targetPos == null) {
 		memory.behaviour.targetPos = getClosestSourceOfEnergy()
 		if (memory.behaviour.targetPos == null) {
 			console.log("behaviourPickup: error, could not find a source of energy")
-			return false
+			return BehavourReturn.CONTINUE_RUNNING
 		}
 	}
 	val targePos = loadPosFromMemory(memory.behaviour.targetPos!!)
 	if (memory.role != Role.EXTRACTOR && pickupEnergyFromPosition(targePos) == ERR_NOT_IN_RANGE) {
 		//go and harvest this pos
 		moveTo(targePos)
-		return true
+		return BehavourReturn.STOP_RUNNING
 	} else {
 		//success
-		return true
+		return BehavourReturn.STOP_RUNNING
 		//todo use the move action as well
 	}
 
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
 fun Creep.getClosestStructureToBuild(includeRoads: Boolean = true): ConstructionSite? {
@@ -109,7 +112,7 @@ fun Creep.getClosestStructureToBuild(includeRoads: Boolean = true): Construction
 //	pos.room.find(FIND_FLAGS).any { !it.pos.isEqualTo( pos) }
 //}
 
-fun Creep.behaviourBuild(): Boolean {
+fun Creep.behaviourBuild(): BehavourReturn {
 	//var target = getClosestStructureToBuild(includeRoads =false)
 
 	var target = room.find(FIND_CONSTRUCTION_SITES)
@@ -121,17 +124,17 @@ fun Creep.behaviourBuild(): Boolean {
 
 	if (target == null) {
 		//nothing to build
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	memory.behaviour.targetPos = target.pos
 	if (build(target!!) == ERR_NOT_IN_RANGE) {
 		moveTo(target.pos)
-		return true
+		return BehavourReturn.STOP_RUNNING
 	} else {
-		return true
+		return BehavourReturn.STOP_RUNNING
 	}
 
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 fun buildPriority(structure: ConstructionSite): Int {
 	if (structure == STRUCTURE_ROAD) {
@@ -256,13 +259,13 @@ fun Creep.moveOffSourcePos(): Boolean {
 	return false
 }
 
-fun Creep.moveOffBaseStoragePos(): Boolean {
+fun Creep.moveOffBaseStoragePos(): BehavourReturn {
 	if (room.memory.bunker.mainStorePos == null) {
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	val p = Bunker(room).storagePos()
 	if (p == null) {
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	console.log("move off base storage bunker ${p} creep ${pos}")
 	if (pos.isEqualTo(p)) {
@@ -274,10 +277,10 @@ fun Creep.moveOffBaseStoragePos(): Boolean {
 		moveTo(newPos)
 
 	}
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
-fun Creep.behaviourDeposit(): Boolean {
+fun Creep.behaviourDeposit(): BehavourReturn {
 	//find the closest place to deposit energy in
 	var targets = room.find(FIND_MY_STRUCTURES)
 			.filter {
@@ -312,23 +315,23 @@ fun Creep.behaviourDeposit(): Boolean {
 		if (output == ERR_NOT_IN_RANGE) {
 			//memory.behaviour.gotoPos =memory.behaviour.targetPos
 			moveTo(bestPos)
-			return true
+			return BehavourReturn.STOP_RUNNING
 		} else if (output == OK) {
 			//todo drop energy for builder
-			return true
+			return BehavourReturn.STOP_RUNNING
 		}
 	} else {
 		//console.log("dropBehavour could not find anything")
 	}
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
-fun Creep.behaviourRefillBuilders(): Boolean {
+fun Creep.behaviourRefillBuilders(): BehavourReturn {
 	//find the closest place to deposit energy in
 	val bunker = Bunker(room)
 	console.log("behaviourRefillBuilders: bunker stored energy is ${bunker.storedEnergy()}")
 	if (bunker.storedEnergy() < room.energyCapacityAvailable *3) {
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 
 	val targets = room.find(FIND_MY_CREEPS)
@@ -355,10 +358,10 @@ fun Creep.behaviourRefillBuilders(): Boolean {
 		if (depositEnergyAt(memory.behaviour.targetPos!!) == ERR_NOT_IN_RANGE) {
 			//memory.behaviour.gotoPos =memory.behaviour.targetPos
 			moveTo(bestPos)
-			return true
+			return BehavourReturn.STOP_RUNNING
 		}
 	} else {
 		//console.log("dropBehavour could not find anything")
 	}
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }

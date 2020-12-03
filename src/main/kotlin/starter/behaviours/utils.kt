@@ -4,6 +4,7 @@ import screeps.api.*
 import screeps.api.structures.Structure
 import screeps.api.structures.StructureContainer
 import starter.*
+import starter.multiAI.Role
 
 fun loadPosFromMemory(targetPos: RoomPosition): RoomPosition {
 	return RoomPosition(targetPos!!.x, targetPos!!.y, targetPos!!.roomName)
@@ -24,7 +25,7 @@ fun Creep.positionHasEnergy(pos: RoomPosition): Boolean {
 }
 
 
-fun Creep.behavourBuildInRange() :Boolean {
+fun Creep.behavourBuildInRange() :BehavourReturn {
 	var target = pos.findInRange(FIND_CONSTRUCTION_SITES, 3)
 //	var target = room.find(FIND_CONSTRUCTION_SITES)
 			.filter { (it.structureType != STRUCTURE_ROAD) }
@@ -33,15 +34,15 @@ fun Creep.behavourBuildInRange() :Boolean {
 
 	if (target == null) {
 		//nothing to build
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	if (build(target!!) == ERR_NOT_IN_RANGE) {
-		return true
+		return BehavourReturn.CONTINUE_RUNNING
 	} else {
-		return true
+		return BehavourReturn.STOP_RUNNING
 	}
 
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
 fun Creep.behavourPickUpEnergyFromTarget() : Boolean {
@@ -65,7 +66,7 @@ fun Creep.behavourSetTarget_GetEnergyFromCollectors() :Boolean {
 	return false
 }
 
-fun Creep.behavourPickupAdjcentResouces() : Boolean {
+fun Creep.behavourPickupAdjcentResouces() : BehavourReturn {
 	val resourceToPickup = pos.findInRange(FIND_DROPPED_RESOURCES, 1)
 	val bunker = Bunker(room)
 	val storagePos = bunker.storagePos()
@@ -79,7 +80,7 @@ fun Creep.behavourPickupAdjcentResouces() : Boolean {
 		}
 		val errorCode = pickup(resource)
 	}
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
 /*

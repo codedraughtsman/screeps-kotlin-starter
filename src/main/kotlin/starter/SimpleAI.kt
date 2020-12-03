@@ -12,6 +12,9 @@ import starter.behaviours.runBehaviour
 import starter.behaviours.updateTower
 import starter.Bunker
 import starter.behaviours.DO_BUILD_ENERGY
+import starter.multiAI.MultiAI
+import starter.multiAI.Role
+
 
 fun gameLoop() {
 	val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -22,13 +25,13 @@ fun gameLoop() {
 	//make sure we have at least some creeps
 	spawnCreeps(Game.creeps.values, mainSpawn)
 
-
-	for (creep in Game.creeps.values.filter { it.memory.role == Role.HAULER_BASE }) {
-		creep.runBehaviour()
-	}
-	for (creep in Game.creeps.values.filter { it.memory.role != Role.HAULER_BASE }) {
-		creep.runBehaviour()
-	}
+	MultiAI.update()
+//	for (creep in Game.creeps.values.filter { it.memory.role == Role.HAULER_BASE }) {
+//		creep.runBehaviour()
+//	}
+//	for (creep in Game.creeps.values.filter { it.memory.role != Role.HAULER_BASE }) {
+//		creep.runBehaviour()
+//	}
 
 	for ((_, room) in Game.rooms) {
 		room.update()
@@ -193,7 +196,9 @@ private fun spawnCreeps(
 		}
 		return
 	}
-	if (creeps.count() == 0 || creeps.count {it.memory.role == Role.HAULER_EXTRACTOR } ==0 || creeps.count {it.memory.role == Role.EXTRACTOR } ==0 ) {
+	if (creeps.count() == 0 || creeps.count {it.memory.role == Role.HAULER_EXTRACTOR } ==0
+			|| creeps.count {it.memory.role == Role.EXTRACTOR } ==0
+			|| creeps.count {it.memory.role == Role.HAULER_BASE } ==0 ) {
 		//restart bot
 		if (creeps.count { it.memory.role == Role.RESCUE_BOT } == 0) {
 			mySpawnCreeps(spawn, Role.RESCUE_BOT, arrayOf(WORK, MOVE, CARRY))

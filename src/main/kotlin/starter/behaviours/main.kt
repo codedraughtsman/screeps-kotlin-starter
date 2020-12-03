@@ -5,6 +5,8 @@ import screeps.api.FIND_DROPPED_RESOURCES
 import screeps.api.FIND_TOMBSTONES
 import screeps.api.RESOURCE_ENERGY
 import starter.*
+import starter.multiAI.Role
+
 
 val DO_BUILD_ENERGY =2000
 
@@ -44,7 +46,7 @@ fun Creep.runBehaviour() {
 
 		for (behaviour in behavours) {
 			val isFinshed = runTheBehaviour(behaviour)
-			if (isFinshed) {
+			if (isFinshed == BehavourReturn.STOP_RUNNING) {
 				break
 			}
 		}
@@ -72,6 +74,8 @@ private fun Creep.globalBehavour() {
 		return
 	}
 
+
+
 	val resourceToPickup = pos.findInRange(FIND_DROPPED_RESOURCES, 1)
 	val bunker = Bunker(room)
 	val storagePos = bunker.storagePos()
@@ -94,6 +98,10 @@ private fun Creep.globalBehavour() {
 	}
 
 	behavourFillUpAdjcentExtentions()
+
+	if (memory.role != Role.EXTRACTOR) {
+		behavourRepairInRange()
+	}
 }
 
 private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
@@ -106,7 +114,7 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 		Role.UPGRADER -> out = arrayListOf(Behavours.PICKUP, Behavours.UPGRADE)
 		Role.EXTRACTOR -> out = arrayListOf( Behavours.HARVEST_EXTRACTOR, Behavours.BUILD_IN_RANGE, Behavours.REPAIR_IN_RANGE, Behavours.PICKUP_ADJECENT_RESOURCES) //TODO static build and upgrade
 //		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.BUILD, Behavours.UPGRADE)
-		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.REPAIR_IN_RANGE, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
+		Role.HAULER_EXTRACTOR -> out = arrayListOf(Behavours.HAULER_PICKUP, Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE)
 		Role.HAULER_BASE -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES, Behavours.REPAIR_IN_RANGE,
 				Behavours.REFILL_BUILDERS ) //Behavours.DEPOSIT_ENERGY_IN_NEAREST_STORAGE
 		Role.RESCUE_BOT -> out = arrayListOf(Behavours.MOVE_OFF_BASE_STORAGE, Behavours.PICKUP_FROM_BASE_STORAGE, Behavours.REFILL_STRUCTURES,
@@ -116,10 +124,10 @@ private fun getBehavioursForRole(role: Role): MutableList<Behavours> {
 	return out
 }
 
-private fun Creep.runTheBehaviour(behaviour: Behavours): Boolean {
-	var isFinished = false
+private fun Creep.runTheBehaviour(behaviour: Behavours): BehavourReturn {
+	var isFinished : BehavourReturn = BehavourReturn.CONTINUE_RUNNING
 	when (behaviour) {
-		Behavours.GOTO -> isFinished = behaviourGoto()
+//		Behavours.GOTO -> isFinished = behaviourGoto()
 		Behavours.PICKUP -> isFinished = behaviourPickup()
 		Behavours.PICKUP_FROM_BASE_STORAGE -> isFinished = behaviourPickupFromBaseStorage()
 		Behavours.REFILL_STRUCTURES -> isFinished = behaviourDeposit()

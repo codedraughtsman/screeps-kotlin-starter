@@ -3,6 +3,8 @@ package starter
 import screeps.api.*
 import screeps.utils.memory.memory
 import screeps.utils.unsafe.jsObject
+import starter.multiAI.Role
+
 
 
  external interface Person {

@@ -3,18 +3,9 @@ package starter
 import screeps.api.*
 import screeps.api.structures.StructureController
 import screeps.api.structures.StructureSpawn
+import starter.behaviours.BehavourReturn
+import starter.multiAI.Role
 
-
-enum class Role {
-	UNASSIGNED,
-	HARVESTER,
-	BUILDER,
-	UPGRADER,
-	EXTRACTOR,
-	HAULER_EXTRACTOR,
-	HAULER_BASE,
-	RESCUE_BOT
-}
 
 fun Creep.updateIsCollectingEnergy() {
 	if (memory.isCollectingEnergy && carry.energy >= (carryCapacity -6)) {
@@ -30,47 +21,51 @@ fun Creep.isHarvesting(): Boolean {
 	return memory.isCollectingEnergy
 }
 
-fun Creep.behavourUpgrade(controller: StructureController): Boolean {
+fun Creep.behavourUpgrade(controller: StructureController): BehavourReturn {
 	updateIsCollectingEnergy()
 	if (isHarvesting()) {
-		return getEnergy()
+		if ( getEnergy()) {
+			return BehavourReturn.STOP_RUNNING
+		} else {
+			BehavourReturn.CONTINUE_RUNNING
+		}
 
 	} else {
 		if (upgradeController(controller) == ERR_NOT_IN_RANGE) {
 			moveTo(controller.pos)
-			return true
+			return BehavourReturn.STOP_RUNNING
 		}
 	}
-	return true
+	return BehavourReturn.STOP_RUNNING
 }
 
-
-
-fun Creep.build(assignedRoom: Room = this.room): Boolean {
-	updateIsCollectingEnergy()
-
-	if (isHarvesting()) {
-		return getEnergy()
-
-	} else {
-		val targets = assignedRoom.find(FIND_MY_CONSTRUCTION_SITES)
-		if (targets.isNotEmpty()) {
-			if (build(targets[0]) == ERR_NOT_IN_RANGE) {
-				moveTo(targets[0].pos)
-				return true
-			}
-		} else {
-			val roadPos = room.getBestRoadLocation()
-			if (roadPos != null) {
-				room.createConstructionSite(roadPos, STRUCTURE_ROAD)
-			} else {
-				val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return false
-				return behavourUpgrade(mainSpawn.room.controller!!)
-			}
-		}
-	}
-	return true
-}
+//
+//
+//fun Creep.build(assignedRoom: Room = this.room): BehavourReturn {
+//	updateIsCollectingEnergy()
+//
+//	if (isHarvesting()) {
+//		return getEnergy()
+//
+//	} else {
+//		val targets = assignedRoom.find(FIND_MY_CONSTRUCTION_SITES)
+//		if (targets.isNotEmpty()) {
+//			if (build(targets[0]) == ERR_NOT_IN_RANGE) {
+//				moveTo(targets[0].pos)
+//				return true
+//			}
+//		} else {
+//			val roadPos = room.getBestRoadLocation()
+//			if (roadPos != null) {
+//				room.createConstructionSite(roadPos, STRUCTURE_ROAD)
+//			} else {
+//				val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return false
+//				return behavourUpgrade(mainSpawn.room.controller!!)
+//			}
+//		}
+//	}
+//	return true
+//}
 
 fun Creep.getEnergy(fromRoom: Room = this.room, toRoom: Room = this.room): Boolean {
 	val collectors = fromRoom.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_CONTAINER }
@@ -98,31 +93,31 @@ fun Creep.getEnergy(fromRoom: Room = this.room, toRoom: Room = this.room): Boole
 	}
 	return false
 }
-
-fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room): Boolean {
-	updateIsCollectingEnergy()
-	if (isHarvesting()) {
-		getEnergy()
-		return true
-	}
-
-	val targets = toRoom.find(FIND_MY_STRUCTURES)
-			.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
-			.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
-
-	if (targets.isNotEmpty()) {
-		if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-			moveTo(targets[0].pos)
-			return false
-		}
-	} else {
-		return build()
-		/*
-		//TODO first repair the structures that need it.
-		val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
-		upgrade(mainSpawn.room.controller!!)
-
-		 */
-	}
-	return false
-}
+//
+//fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room): Boolean {
+//	updateIsCollectingEnergy()
+//	if (isHarvesting()) {
+//		getEnergy()
+//		return true
+//	}
+//
+//	val targets = toRoom.find(FIND_MY_STRUCTURES)
+//			.filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
+//			.filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+//
+//	if (targets.isNotEmpty()) {
+//		if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+//			moveTo(targets[0].pos)
+//			return false
+//		}
+//	} else {
+//		return build()
+//		/*
+//		//TODO first repair the structures that need it.
+//		val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
+//		upgrade(mainSpawn.room.controller!!)
+//
+//		 */
+//	}
+//	return false
+//}

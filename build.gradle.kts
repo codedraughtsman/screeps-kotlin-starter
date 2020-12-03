@@ -19,6 +19,7 @@ dependencies {
     implementation(kotlin("stdlib-js"))
     testImplementation(kotlin("test-js"))
     implementation( "com.beust:klaxon:5.2")
+    testImplementation ("junit:junit:4.12")
 }
 
 val screepsUser: String? by project

@@ -3,10 +3,12 @@ package starter.behaviours
 import screeps.api.*
 import screeps.api.structures.StructureExtension
 import starter.*
+import starter.multiAI.Role
 
-fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
+
+fun Creep.behavourDepositEnergyInBaseStorage(): BehavourReturn {
 	if (isHarvesting()){
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 
 	val flag = Game.flags.values.filter { it.name.startsWith("base") }
@@ -15,7 +17,7 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 
 	if (flag == null){
 		console.log("behavourDepositEnergyInBaseStorage: error no valid base flags found for entire game")
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	val baseRoom = flag.room!!
 
@@ -23,7 +25,7 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 
 	if (baseRoom.memory.bunker.mainStorePos== null) {
 		console.log("behavourDepositEnergyInBaseStorage, error, no main storage pos set")
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	//todo what if the storage is full? should it be deposited some where else?
 	//val targetPos = loadPosFromMemory(room.memory.bunker.mainStorePos!!)
@@ -32,29 +34,29 @@ fun Creep.behavourDepositEnergyInBaseStorage(): Boolean {
 	val targetPos = Bunker(baseRoom).storagePos()
 	if (targetPos == null) {
 		console.log("invalid pos in behavourDepositEnergyInBaseStorage")
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	console.log("trying to depost ")
 	if (depositEnergyAt(targetPos) == ERR_NOT_IN_RANGE) {
 //		drop(RESOURCE_ENERGY)
 		moveTo(targetPos)
-		return true
+		return BehavourReturn.STOP_RUNNING
 	}
-	return true
+	return BehavourReturn.STOP_RUNNING
 
 }
 
-fun Creep.behavourRepairInRange() : Boolean {
+fun Creep.behavourRepairInRange() : BehavourReturn {
 	var targets = pos.findInRange(FIND_STRUCTURES, 3)
 			.filter { it.hits != it.hitsMax }
-			.sortedBy { it.hits/it.hitsMax }
+			.sortedBy { (100000.0 *it.hits)/ (100000.0 *it.hitsMax) }
 //			.sortedBy { if (it.structureType == STRUCTURE_ROAD) return 1; return 0 }
 	for (target in targets) {
 		if (repair(target)== OK) {
-			return true
+			return BehavourReturn.STOP_RUNNING
 		}
 	}
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 
 private fun findNearestExtractorThatNeedAHauler(creep: Creep): RoomPosition? {
@@ -100,15 +102,15 @@ fun Creep.behavourFillUpAdjcentExtentions() : Boolean {
 	return false
 }
 
-fun Creep.behaviourHaulerPickup(): Boolean {
+fun Creep.behaviourHaulerPickup(): BehavourReturn {
 	if (!isHarvesting()){
-		return false
+		return BehavourReturn.CONTINUE_RUNNING
 	}
 	if (memory.behaviour.sourcePos == null) {
 		memory.behaviour.sourcePos = findNearestExtractorThatNeedAHauler(this)
 		if (memory.behaviour.sourcePos == null) {
 			console.log("behaviourHaulerPickup: error, could not find a free extractor flag")
-			return false
+			return BehavourReturn.CONTINUE_RUNNING
 		}
 	}
 	console.log("this is creep ${this.name}")
@@ -132,7 +134,7 @@ fun Creep.behaviourHaulerPickup(): Boolean {
 //		//console.log("behaviourHaulerPickup: error, failed to harvest energy from $targetPos ")
 //	}
 
-	return false
+	return BehavourReturn.CONTINUE_RUNNING
 }
 /*
 fun Creep.behaviourDepositEnergyInNearestStorage(): Boolean {

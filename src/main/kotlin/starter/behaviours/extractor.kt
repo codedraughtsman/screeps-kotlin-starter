@@ -1,7 +1,7 @@
 package starter.behaviours
 
 import screeps.api.*
-import starter.Role
+import starter.multiAI.Role
 import starter.behaviour
 import starter.role
 
@@ -42,14 +42,14 @@ fun findNearestFreeExtractorFlag(creep: Creep, creepRole: Role): RoomPosition? {
 }
 
 
-fun Creep.behaviourHarvestExtractor(): Boolean {
+fun Creep.behaviourHarvestExtractor(): BehavourReturn {
 //	console.log("running behaviourHarvestExtractor, target pos is ${memory.behaviour.targetPos}");
 	if (memory.behaviour.targetPos == null) {
 		console.log("finding a new target for extractor.")
 		memory.behaviour.targetPos = findNearestFreeExtractorFlag(this, Role.EXTRACTOR)
 		if (memory.behaviour.targetPos == null) {
 			console.log("behaviourHarvestExtractor: error, could not find a free extractor flag")
-			return false
+			return BehavourReturn.CONTINUE_RUNNING
 		}
 	}
 //	console.log("target pos is now ${memory.behaviour.targetPos}")
@@ -58,7 +58,7 @@ fun Creep.behaviourHarvestExtractor(): Boolean {
 
 	if (!pos.isEqualTo(targetPos)) {
 		moveTo(targetPos)
-		return true
+		return BehavourReturn.STOP_RUNNING
 	}
 
 	val sources = targetPos.findInRange(FIND_SOURCES_ACTIVE, 1)
@@ -70,7 +70,7 @@ fun Creep.behaviourHarvestExtractor(): Boolean {
 	if (carry.energy > 0) {
 		drop(RESOURCE_ENERGY)
 	}
-	return true
+	return BehavourReturn.STOP_RUNNING
 
 }
 
