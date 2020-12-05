@@ -1,6 +1,8 @@
 package starter.multiAI
 
 import screeps.api.Creep
+import starter.multiAI.Actions.*
+import starter.multiAI.Actions.ExtractorHauler
 
 enum class Role {
 	UNASSIGNED,
@@ -26,17 +28,19 @@ var roleMap : Map<Role,MultiAI_Action> = mapOf(
 //						InRange::mine
 //				)),
 //
-		Role.HAULER_BASE to MultiAI_Action(
+		Role.HAULER_EXTRACTOR to MultiAI_Action(
 				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
-						Move::towardsTarget,
-						MoveSetTarget::baseStoreIfCarrying,
-						MoveSetTarget::miningPointWithMostResouceToPickup
+//						Move::towardsTarget,
+////						MoveSetTarget::baseStoreIfCarrying,
+////						MoveSetTarget::miningPointWithMostResouceToPickup
+				ExtractorHauler::hauler
 				),
 		arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
 				InRange::pickupEnergyOnMiningPos,
-				InRange::pickupEnergyFree,
-				InRange::depositInBaseStorage //also need to clear target pos when doing this
-
+				InRange::pickupResourceFree_NotOnBaseStore,
+				InRange::depositInBaseStorage, //also need to clear target pos when doing this
+				InRange::build,
+				InRange::repair
 		))
 )
 

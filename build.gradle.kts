@@ -19,8 +19,15 @@ dependencies {
     implementation(kotlin("stdlib-js"))
     testImplementation(kotlin("test-js"))
     implementation( "com.beust:klaxon:5.2")
-    testImplementation ("junit:junit:4.12")
+
+//    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
+//    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+//    testImplementation(platform("org.junit:junit-bom:5.7.0"))
+//    testImplementation("org.junit.jupiter:junit-jupiter")
+//    testImplementation( "org.junit.jupiter:junit-jupiter-api:5.1.1")
+//    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.1.1")
 }
+
 
 val screepsUser: String? by project
 val screepsPassword: String? by project
@@ -34,6 +41,19 @@ val host = screepsHost ?: "https://screeps.com"
 fun String.encodeBase64() = Base64.getEncoder().encodeToString(this.toByteArray())
 
 tasks {
+    test {
+        useJUnitPlatform()
+//        testLogging {
+////            events = setOf(
+////                    TestLogEvent.STARTED,
+////                    TestLogEvent.PASSED,
+////                    TestLogEvent.FAILED
+////            )
+//            // show standard out and standard error of the test
+//            // JVM(s) on the console
+//            showStandardStreams = true
+//        }
+    }
     "compileKotlin2Js"(Kotlin2JsCompile::class) {
         kotlinOptions {
             moduleKind = "commonjs"

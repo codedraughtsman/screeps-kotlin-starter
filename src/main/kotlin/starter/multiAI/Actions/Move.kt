@@ -1,10 +1,12 @@
-package starter.multiAI
+package starter.multiAI.Actions
 
 import screeps.api.Creep
 import screeps.api.OK
 import screeps.api.RoomPosition
 import starter.behaviour
 import starter.behaviours.loadPosFromMemory
+import starter.multiAI.MultiAI
+import starter.utils.isMiningPoint
 
 object Move {
 	fun towardsTarget(creep: Creep): MultiAI.ReturnType {
@@ -18,6 +20,10 @@ object Move {
 
 		if (creep.pos.isEqualTo(targetPos)) {
 			//no point in moving
+			return MultiAI.ReturnType.CONTINUE
+		}
+		if (creep.pos.isNearTo(targetPos) && isMiningPoint(targetPos)){
+			//hack to stop them from moving onto mining pos
 			return MultiAI.ReturnType.CONTINUE
 		}
 

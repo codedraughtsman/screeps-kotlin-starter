@@ -125,7 +125,7 @@ fun Creep.depositEnergyAt(targetPos: RoomPosition): ScreepsReturnCode {
 
 	//try to transfer to target
 	val targets = room.find(FIND_MY_STRUCTURES).filter { it.pos.isEqualTo(targetPos) }
-
+	console.log("found targets ${targets}")
 	for (structure in targets) {
 //		console.log("trying to transfer to ${structure.pos}")
 		if (transfer(structure, RESOURCE_ENERGY) == OK) {

@@ -1,16 +1,14 @@
-package starter.multiAI
+package starter.multiAI.Actions
 
 import screeps.api.Creep
 import screeps.api.FIND_FLAGS
 import screeps.api.RESOURCE_ENERGY
 import screeps.api.RoomPosition
+import starter.multiAI.MultiAI
+import starter.utils.isMiningPoint
 
 object Misc {
-	fun isMiningPoint(pos: RoomPosition) : Boolean {
-		val flags = pos.findInRange(FIND_FLAGS,0)
-				.filter { it.name.contains("extractor") }
-		return !flags.isNullOrEmpty()
-	}
+
 
 	fun dropEnergyOnMiningPoint(creep: Creep) : MultiAI.ReturnType {
 

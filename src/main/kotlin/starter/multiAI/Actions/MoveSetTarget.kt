@@ -1,26 +1,20 @@
-package starter.multiAI
+package starter.multiAI.Actions
 
 import screeps.api.*
 import starter.Bunker
 import starter.behaviour
 import starter.behaviours.loadPosFromMemory
+import starter.multiAI.MultiAI
+import starter.multiAI.Role
 import starter.role
+import starter.utils.findClosestBunker
 
 fun getMiningPoints(): List<Flag> {
 	return Game.flags.values.filter { it.name.contains("extractor") }
 }
 
 
-fun findClosestBunker (pos : RoomPosition): Bunker? {
-	val baseFlags = Game.flags.values.filter { it.name.startsWith("base") }
-			//.sortedBy {  movedistance}
-	//TODO sort them by travel distance
-	if (baseFlags.isNullOrEmpty()) {
-		return null
-	}
-	var baseRoom : Room = baseFlags[0].room!!
-	return Bunker(baseRoom)
-}
+
 
 fun energyOnPos (pos: RoomPosition) : Int {
 	return 0
@@ -47,7 +41,7 @@ fun energyToBePickedUpAtPoint(pos: RoomPosition, role: Role) : Int {
 
 	val creeps = Game.creeps.values
 			.filter { it.memory.role == role }
-			.filter {targetPosIsEqualTo(it, pos)}
+			.filter { targetPosIsEqualTo(it, pos) }
 
 	for (creep in creeps) {
 		energyAtPoint -= creep.carryCapacity
@@ -72,21 +66,23 @@ object MoveSetTarget {
 //		return MultiAI.ReturnType.CONTINUE
 //	}
 	fun baseStoreIfCarrying(creep: Creep) : MultiAI.ReturnType {
+		console.log("starting baseStoreIfCarrying")
 		if (creep.carry.energy == 0) {
 			//cannot drop off energy for the creep has none.
 			return MultiAI.ReturnType.CONTINUE
 		}
 
-	return MultiAI.ReturnType.CONTINUE
+	return baseStore(creep)
 	}
 
-	fun baseStore(creep: Creep) :MultiAI.ReturnType {
+	fun baseStore(creep: Creep) : MultiAI.ReturnType {
 		var closestBunker :Bunker? = findClosestBunker(creep.pos)
 		if (closestBunker == null) {
 			//we have no bunkers yet.
 			return MultiAI.ReturnType.CONTINUE
 		}
 		creep.memory.behaviour.targetPos = closestBunker.storagePos()
+//		console.log("setting creep target pos to closest bunker ${closestBunker.storagePos()}")
 		return MultiAI.ReturnType.STOP
 	}
 

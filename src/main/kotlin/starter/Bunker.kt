@@ -5,6 +5,12 @@ import screeps.api.structures.StructureStorage
 import starter.behaviours.isTraversable
 import starter.behaviours.loadPosFromMemory
 
+fun roomContainsBunker(room: Room) :Boolean {
+	return room.memory.bunker.mainStorePos != null
+}
+
+
+
 class Bunker (val room: Room) {
 	init {
 
@@ -23,11 +29,11 @@ class Bunker (val room: Room) {
 		console.log("Bunker.storagePos: using altenate position")
 		return room.getPositionAt(storePos.x +1, storePos.y)
 		//use the backup store pos.
-		val adjcent = getAdjcentSquares(storePos).filter { isTraversable(it) }
-		if (adjcent == null) {
-			return null
-		}
-		return adjcent[0]
+//		val adjcent = getAdjcentSquares(storePos).filter { isTraversable(it) }
+//		if (adjcent == null) {
+//			return null
+//		}
+//		return adjcent[0]
 	}
 
 
