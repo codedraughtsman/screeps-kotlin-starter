@@ -6,6 +6,8 @@ import screeps.api.RoomPosition
 import starter.behaviour
 import starter.behaviours.loadPosFromMemory
 import starter.multiAI.MultiAI
+import starter.multiAI.Role
+import starter.role
 import starter.utils.isMiningPoint
 
 object Move {
@@ -22,7 +24,8 @@ object Move {
 			//no point in moving
 			return MultiAI.ReturnType.CONTINUE
 		}
-		if (creep.pos.isNearTo(targetPos) && isMiningPoint(targetPos)){
+		if (creep.pos.isNearTo(targetPos) && isMiningPoint(targetPos) &&
+				creep.memory.role != Role.EXTRACTOR){
 			//hack to stop them from moving onto mining pos
 			return MultiAI.ReturnType.CONTINUE
 		}

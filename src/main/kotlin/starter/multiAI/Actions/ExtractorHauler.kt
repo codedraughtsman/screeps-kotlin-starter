@@ -4,6 +4,7 @@ import screeps.api.Creep
 import screeps.api.values
 import starter.behaviour
 import starter.multiAI.MultiAI
+import starter.utils.getTargetPos
 
 object ExtractorHauler {
 	fun hauler(creep: Creep): MultiAI.ReturnType {

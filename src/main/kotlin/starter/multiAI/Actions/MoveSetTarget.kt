@@ -3,68 +3,43 @@ package starter.multiAI.Actions
 import screeps.api.*
 import starter.Bunker
 import starter.behaviour
+import starter.behaviours.buildPriority
 import starter.behaviours.loadPosFromMemory
 import starter.multiAI.MultiAI
 import starter.multiAI.Role
 import starter.role
-import starter.utils.findClosestBunker
+import starter.utils.*
 
-fun getMiningPoints(): List<Flag> {
-	return Game.flags.values.filter { it.name.contains("extractor") }
-}
-
-
-
-
-fun energyOnPos (pos: RoomPosition) : Int {
-	return 0
-}
-
-fun getTargetPos(creep: Creep): RoomPosition? {
-	if (creep.memory.behaviour.targetPos == null) {
-		return null
-	}
-	return loadPosFromMemory(creep.memory.behaviour.targetPos!!)
-}
-
-fun targetPosIsEqualTo(creep: Creep, pos: RoomPosition) :Boolean {
-	val targetPos = getTargetPos(creep)
-	if (targetPos == null) {
-		return false
-	}
-	return (pos.isEqualTo(targetPos!!))
-}
-
-//TODO rename this to a better name.
-fun energyToBePickedUpAtPoint(pos: RoomPosition, role: Role) : Int {
-	var energyAtPoint = energyOnPos(pos)
-
-	val creeps = Game.creeps.values
-			.filter { it.memory.role == role }
-			.filter { targetPosIsEqualTo(it, pos) }
-
-	for (creep in creeps) {
-		energyAtPoint -= creep.carryCapacity
-	}
-
-	return energyAtPoint
-}
 
 object MoveSetTarget {
-//	fun freeMiningPoints(creep: Creep) : MultiAI.ReturnType {
-//
-//		var extractorCreeps = Game.creeps.values
-//				.filter { it.memory.role == Role.HAULER_EXTRACTOR }
-//
-//		var freeMiningPoints = getMiningPoints()
-//				.filter { miningPoint ->extractorCreeps.count {
-//					var creepPos = loadPosFromMemory( it.memory.behaviour.targetPos );
-//					creepPos.isEqualTo(miningPoint)
-//				} > 0 }
-//
-//
-//		return MultiAI.ReturnType.CONTINUE
-//	}
+	fun upgraderPoint(creep: Creep) :MultiAI.ReturnType {
+		val depositorFlag = creep.room.find(FIND_FLAGS)
+				.filter { it.name.contains("depositor") }
+				.filter { noCreepHasPosAsTarget(it.pos) }
+				.firstOrNull()
+
+		if (depositorFlag == null) {
+			return MultiAI.ReturnType.CONTINUE
+		}
+		creep.memory.behaviour.targetPos = depositorFlag.pos
+		return MultiAI.ReturnType.CONTINUE
+	}
+	fun constructionSite(creep:Creep) : MultiAI.ReturnType {
+		val sites = creep.room.find(FIND_CONSTRUCTION_SITES)
+				.sortedByDescending { (it.progress *1000) / (it.progressTotal *1000) }
+				.sortedByDescending { buildPriority(it) }
+				.sortedBy { creep.pos.getRangeTo(it) }
+				.firstOrNull()
+
+		console.log("constructionSite is ${sites} ${sites!!.pos}")
+		if (sites != null) {
+
+			creep.memory.behaviour.targetPos = sites.pos
+		}
+
+
+		return MultiAI.ReturnType.CONTINUE
+	}
 	fun baseStoreIfCarrying(creep: Creep) : MultiAI.ReturnType {
 		console.log("starting baseStoreIfCarrying")
 		if (creep.carry.energy == 0) {

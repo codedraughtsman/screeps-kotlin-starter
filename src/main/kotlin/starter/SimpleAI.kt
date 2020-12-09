@@ -14,6 +14,7 @@ import starter.Bunker
 import starter.behaviours.DO_BUILD_ENERGY
 import starter.multiAI.MultiAI
 import starter.multiAI.Role
+import starter.utils.noCreepHasPosAsTarget
 
 
 fun gameLoop() {
@@ -96,88 +97,8 @@ private fun bestExtractor(spawn: StructureSpawn, roadOnly :Boolean =true): Array
 	}
 	return outArray.toTypedArray()
 }
-private fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
-	var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
-	if (road) {
-		body = arrayOf<BodyPartConstant>(CARRY, CARRY, MOVE)
-	}
-	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
 
-	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[WORK]!!) / bodyCost
-
-	var outArray: MutableList<BodyPartConstant> = arrayListOf()
-	outArray.add(WORK)
-
-	for (i in 1..multiples) {
-		for (part in body) {
-			outArray.add(part)
-		}
-	}
-
-	return outArray.toTypedArray()
-
-}
-private fun bestHaulerBase(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
-	var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
-	if (road) {
-		body = arrayOf<BodyPartConstant>(CARRY, CARRY, MOVE)
-	}
-	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
-
-
-	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[WORK]!!) / bodyCost
-
-	var outArray: MutableList<BodyPartConstant> = arrayListOf()
-	outArray.add(WORK)
-
-	for (i in 1..multiples) {
-		for (part in body) {
-			outArray.add(part)
-		}
-	}
-
-	return outArray.toTypedArray()
-
-}
-
-private fun bestBuilder(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
-	val mustHave = arrayOf<BodyPartConstant>(CARRY)
-	var body = arrayOf<BodyPartConstant>(WORK, MOVE)
-	if (road) {
-		body = arrayOf<BodyPartConstant>(WORK, WORK, MOVE)
-	}
-	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
-
-	val mustHaveCost = mustHave.sumBy{ BODYPART_COST[it]!! }
-
-	val energyInRoom = spawn.room.energyAvailable
-
-	var multiples = (spawn.room.energyCapacityAvailable - mustHaveCost) / bodyCost
-
-	var outArray: MutableList<BodyPartConstant> = arrayListOf()
-
-	for (part in mustHave) {
-		outArray.add(part)
-	}
-
-	for (i in 1..multiples) {
-		for (obj in body){
-			outArray.add(obj)
-		}
-	}
-	val fillers = arrayOf<BodyPartConstant>(WORK, CARRY)
-	for (fillPart in fillers) {
-		var fillCost = BODYPART_COST[fillPart]!!
-
-		while (outArray.sumBy { BODYPART_COST[it]!! } + fillCost <= spawn.room.energyCapacityAvailable) {
-			outArray.add(fillPart)
-		}
-	}
-
-	return outArray.toTypedArray()
-
-}
 
 private fun spawnCreeps(
 		creeps: Array<Creep>,
@@ -213,11 +134,10 @@ private fun spawnCreeps(
 	val nonOldCreeps = creeps.filter { it.ticksToLive > 300  }
 
 	if (nonOldCreeps.count { it.memory.role == Role.HAULER_BASE } < 1){
-		mySpawnCreeps(spawn, Role.HAULER_BASE,bestHaulerBase(spawn))
+		mySpawnCreeps(spawn, Role.HAULER_BASE, SpawingController.bestHaulerBase(spawn))
 		return
 	}
-	if ( nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
-		mySpawnCreeps(spawn, Role.HAULER_EXTRACTOR,bestHauler(spawn,spawn.room.controller!!.level >= 3))
+	if (SpawingController.spawnHaulerExtractor(spawn)) {
 		return
 	}
 
@@ -229,12 +149,20 @@ private fun spawnCreeps(
 
 	//note: we dont care about overlap with the builder
 	if ( Bunker(spawn.room).storedEnergy() > DO_BUILD_ENERGY) {
-		//todo only if there are construction sites build a builder.
-		if (creeps.count { it.memory.role == Role.BUILDER } < 2 ) {
-			mySpawnCreeps(spawn, Role.BUILDER, bestBuilder(spawn))
-			return
+		//only if there are construction sites build a builder.
+		if (spawn.room.find(FIND_CONSTRUCTION_SITES).count() > 0) {
+			if (creeps.count { it.memory.role == Role.BUILDER } < 1) {
+				mySpawnCreeps(spawn, Role.BUILDER, SpawingController.bestBuilder(spawn))
+				return
+			}
 		}
 		//depositor spawn
+		val depoitorFlagCount = spawn.room.find(FIND_FLAGS)
+				.filter{it.name.contains("depositor")}.count()
+
+		if (creeps.count { it.memory.role == Role.UPGRADER } < depoitorFlagCount) {
+			mySpawnCreeps(spawn, Role.UPGRADER, SpawingController.bestBuilder(spawn))
+		}
 	}
 
 
@@ -252,64 +180,6 @@ fun mySpawnCreeps(spawn: StructureSpawn, role: Role, body: Array<BodyPartConstan
 		else -> console.log("unhandled error code $code")
 	}
 }
-
-/*private fun spawnCreeps(
-		creeps: Array<Creep>,
-		spawn: StructureSpawn
-) {
-	var body: Array<BodyPartConstant> = arrayOf<BodyPartConstant>()
-	var role: Role = Role.UNASSIGNED
-	val numberOfExtractorFlags = spawn.room.find(FIND_FLAGS).filter { it.name.startsWith("extractor", true) }.count()
-	if (creeps.count { it.memory.role == Role.HARVESTER } == 0) {
-		body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
-		role = Role.HARVESTER
-	} else if ( creeps.count { it.memory.role == Role.EXTRACTOR }  > creeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
-		//need to make an extractor
-		body = bestHauler(spawn)
-		role = Role.HAULER_EXTRACTOR
-
-	} else if (numberOfExtractorFlags > creeps.count { it.memory.role == Role.EXTRACTOR }) {
-		//need to make an extractor
-		body = bestExtractor(spawn)
-		role = Role.EXTRACTOR
-
-	}  else {
-		body = bestWorker(spawn)
-		role = when {
-			creeps.count { it.memory.role == Role.HARVESTER } < spawn.room.memory.maxWorkers-> Role.HARVESTER
-
-			//creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
-/*
-			spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
-					creeps.count { it.memory.role == Role.BUILDER } < 1 -> Role.BUILDER
-
-
-			creeps.count { it.memory.role == Role.BUILDER } == 0 -> Role.BUILDER
-*/
-			else -> return
-		}
-	}
-
-
-	if (spawn.room.energyAvailable < body.sumBy { BODYPART_COST[it]!! } && creeps.count { it.memory.role == Role.HARVESTER } > 2) {
-		return
-	}
-
-	if (role == Role.UNASSIGNED || body.isEmpty()) {
-		return
-	}
-
-	val newName = "${role.name}_${Game.time}"
-	val code = spawn.spawnCreep(body, newName, options {
-		memory = jsObject<CreepMemory> { this.role = role }
-	})
-
-	when (code) {
-		OK -> console.log("spawning $newName with body $body")
-		ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
-		else -> console.log("unhandled error code $code")
-	}
-}*/
 
 private fun houseKeeping(creeps: Record<String, Creep>) {
 	if (Game.creeps.isEmpty()) return  // this is needed because Memory.creeps is undefined

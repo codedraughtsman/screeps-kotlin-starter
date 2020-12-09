@@ -10,6 +10,18 @@ import starter.utils.*
 import starter.utils.totalResourceOnPos
 
 object InRange {
+	fun depositInExtension(creep: Creep) : MultiAI.ReturnType {
+		val targets = creep.pos.findInRange(FIND_MY_STRUCTURES,1)
+				.filter { it.structureType == STRUCTURE_EXTENSION }
+
+		for (target in targets) {
+			if (depositEnergy(creep,target.pos)) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
+		return MultiAI.ReturnType.CONTINUE
+	}
+
 	fun repair(creep: Creep) : MultiAI.ReturnType {
 		val targets =
 				creep.pos.findInRange(FIND_STRUCTURES, 3)
@@ -37,6 +49,19 @@ object InRange {
 		}
 		return MultiAI.ReturnType.CONTINUE
 	}
+	fun upgrade(creep: Creep) : MultiAI.ReturnType {
+		val target =
+				creep.room.controller
+		if (target == null || target.my) {
+			return MultiAI.ReturnType.CONTINUE
+		}
+
+
+		if (creep.upgradeController(target) == OK) {
+			return MultiAI.ReturnType.STOP
+		}
+		return MultiAI.ReturnType.CONTINUE
+	}
 
 	fun depositInBaseStorage(creep: Creep) : MultiAI.ReturnType {
 		console.log("starting depositInBaseStorage")
@@ -57,6 +82,19 @@ object InRange {
 
 		return MultiAI.ReturnType.CONTINUE
 	}
+	fun pickupStoredEnergy(creep: Creep) :MultiAI.ReturnType{
+		val stores = creep.pos.findInRange(FIND_STRUCTURES,1)
+				.filter { it.structureType == STRUCTURE_STORAGE ||
+				it.structureType == STRUCTURE_CONTAINER}
+
+		for (store in stores) {
+			if (pickUpResourceOnPos_Stored(creep, store.pos, RESOURCE_ENERGY) ) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
+		return MultiAI.ReturnType.CONTINUE
+	}
+
 	fun pickupResourceFree_NotOnBaseStore(creep: Creep) :MultiAI.ReturnType {
 		console.log("starting pickupResourceFree_NotOnBaseStore")
 		val baseStorePos = Bunker(creep.room).storagePos()
@@ -122,6 +160,15 @@ object InRange {
 			}
 		}
 
+		//if we got to here then there are no mineable sources.
+		//we may be mining resources
+		val mineralTargets = creep.pos.findInRange(FIND_MINERALS,1)
+//				.filter { var source = it as Source;  source.energy > 0 }
+		for (target in mineralTargets) {
+			if (creep.harvest(target) == OK) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
 		return MultiAI.ReturnType.CONTINUE
 	}
 
