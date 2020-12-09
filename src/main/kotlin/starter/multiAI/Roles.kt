@@ -17,6 +17,17 @@ enum class Role {
 }
 
 var roleMap : Map<Role,MultiAI_Action> = mapOf(
+		Role.HAULER_CREEP to MultiAI_Action(
+				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
+						HaulerCreep::haulerCreep
+				),
+				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
+						InRange::pickupResourceFree,
+						InRange::pickupStoredEnergy,
+						InRange::depositInExtension,
+						InRange::fullUpTargetCreep
+				)),
+
 		Role.EXTRACTOR to MultiAI_Action(
 				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
 					Extractor::extractor
@@ -46,7 +57,7 @@ var roleMap : Map<Role,MultiAI_Action> = mapOf(
 				),
 				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
 						InRange::build,
-						InRange::repair,
+//						InRange::repair,
 						InRange::upgrade,
 						InRange::pickupResourceFree,
 						InRange::pickupStoredEnergy

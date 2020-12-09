@@ -161,7 +161,13 @@ private fun spawnCreeps(
 				.filter{it.name.contains("depositor")}.count()
 
 		if (creeps.count { it.memory.role == Role.UPGRADER } < depoitorFlagCount) {
-			mySpawnCreeps(spawn, Role.UPGRADER, SpawingController.bestBuilder(spawn))
+			mySpawnCreeps(spawn, Role.UPGRADER, SpawingController.bestDepositor(spawn))
+			return
+		}
+
+		if (creeps.count { it.memory.role == Role.UPGRADER } > creeps.count { it.memory.role == Role.HAULER_CREEP }) {
+			mySpawnCreeps(spawn, Role.HAULER_CREEP, SpawingController.bestHauler(spawn))
+			return
 		}
 	}
 
@@ -186,7 +192,7 @@ private fun houseKeeping(creeps: Record<String, Creep>) {
 
 	for ((creepName, _) in Memory.creeps) {
 		if (creeps[creepName] == null) {
-			console.log("deleting obsolete memory entry for creep $creepName")
+//			console.log("deleting obsolete memory entry for creep $creepName")
 			delete(Memory.creeps[creepName])
 		}
 	}

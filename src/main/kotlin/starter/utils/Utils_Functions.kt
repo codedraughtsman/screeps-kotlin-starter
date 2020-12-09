@@ -25,6 +25,7 @@ fun energyOnPos (pos: RoomPosition) : Int {
 }
 
 
+
 fun noCreepHasPosAsTarget(pos: RoomPosition) :Boolean {
 	for (creep in Game.creeps.values){
 		val creepPos = getTargetPos(creep)
@@ -32,6 +33,19 @@ fun noCreepHasPosAsTarget(pos: RoomPosition) :Boolean {
 			continue
 		}
 		if (pos.isEqualTo(creepPos)) {
+			return false
+		}
+	}
+	return true
+}
+
+fun noCreepHasTargetID_AsTarget(targetID: String) :Boolean {
+	for (creep in Game.creeps.values){
+		val creepTargetID = creep.memory.behaviour.targetID
+		if (creepTargetID == null) {
+			continue
+		}
+		if (creepTargetID == targetID) {
 			return false
 		}
 	}
@@ -187,12 +201,12 @@ fun depositEnergy(creep: Creep, depositPos: RoomPosition) : Boolean {
 	}
 
 	for (resouceType in carriedResources) {
-		creep.say("transfering now")
-		console.log("trying to transfer ${creep.pos} ${structure.pos} ${structure}, ${resouceType}")
+//		creep.say("transfering now")
+//		console.log("trying to transfer ${creep.pos} ${structure.pos} ${structure}, ${resouceType}")
 		val ret = creep.transfer(structure, resouceType)
-		console.log("ret code is ${ret}")
+//		console.log("ret code is ${ret}")
 		if ( ret == OK) {
-			console.log("transferred ${structure}, ${resouceType}")
+//			console.log("transferred ${structure}, ${resouceType}")
 			return true
 		}
 	}

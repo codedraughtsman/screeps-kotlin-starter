@@ -47,7 +47,7 @@ fun Creep.behaviourPickupFromBaseStorage(forced: Boolean = false): BehavourRetur
 	}
 
 	if (room.memory.bunker.mainStorePos == null) {
-		console.log("behaviourPickupFromBaseStorage: error, main store position is null")
+//		console.log("behaviourPickupFromBaseStorage: error, main store position is null")
 		return BehavourReturn.CONTINUE_RUNNING
 	}
 	val targePos = Bunker(room).storagePos()!!
@@ -79,7 +79,7 @@ fun Creep.behaviourPickup(): BehavourReturn {
 	if (memory.behaviour.targetPos == null) {
 		memory.behaviour.targetPos = getClosestSourceOfEnergy()
 		if (memory.behaviour.targetPos == null) {
-			console.log("behaviourPickup: error, could not find a source of energy")
+//			console.log("behaviourPickup: error, could not find a source of energy")
 			return BehavourReturn.CONTINUE_RUNNING
 		}
 	}
@@ -223,7 +223,7 @@ fun Creep.behaviourRepairWhileMoving(): Boolean {
 	}
 
 	if (carry.energy < (carryCapacity) / 2) {
-		console.log("behaviourRepairWhileMoving: not carrying enough energy")
+//		console.log("behaviourRepairWhileMoving: not carrying enough energy")
 		//only repair with the first 1/4 of the energy that it is carrying
 		return false
 	}
@@ -232,10 +232,10 @@ fun Creep.behaviourRepairWhileMoving(): Boolean {
 
 	if (target == null) {
 		//nothing to build
-		console.log("behaviourRepairWhileMoving: no targets")
+//		console.log("behaviourRepairWhileMoving: no targets")
 		return false
 	}
-	console.log("chosen target is $target at ${target.pos}")
+//	console.log("chosen target is $target at ${target.pos}")
 	if (repair(target!!) == ERR_NOT_IN_RANGE) {
 		console.log("behaviourRepairWhileMoving: error, target is not in range. it should be")
 	}
@@ -267,7 +267,7 @@ fun Creep.moveOffBaseStoragePos(): BehavourReturn {
 	if (p == null) {
 		return BehavourReturn.CONTINUE_RUNNING
 	}
-	console.log("move off base storage bunker ${p} creep ${pos}")
+//	console.log("move off base storage bunker ${p} creep ${pos}")
 	if (pos.isEqualTo(p)) {
 		//move in a random direction
 		val directions = getAdjcentSquares(p)

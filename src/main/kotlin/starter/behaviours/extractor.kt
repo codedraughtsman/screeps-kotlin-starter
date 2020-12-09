@@ -6,7 +6,7 @@ import starter.behaviour
 import starter.role
 
 fun findNearestFreeExtractorFlag(creep: Creep, creepRole: Role): RoomPosition? {
-	console.log("creep pos is ${creep.pos}");
+//	console.log("creep pos is ${creep.pos}");
 	val flags = creep.pos.lookFor(LOOK_FLAGS)
 	val flagOnSquare = (flags != null &&
 			flags.any { it.name.startsWith("extractor", true) })

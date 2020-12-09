@@ -31,7 +31,7 @@ object MoveSetTarget {
 				.sortedBy { creep.pos.getRangeTo(it) }
 				.firstOrNull()
 
-		console.log("constructionSite is ${sites} ${sites!!.pos}")
+//		console.log("constructionSite is ${sites} ${sites!!.pos}")
 		if (sites != null) {
 
 			creep.memory.behaviour.targetPos = sites.pos
@@ -41,7 +41,7 @@ object MoveSetTarget {
 		return MultiAI.ReturnType.CONTINUE
 	}
 	fun baseStoreIfCarrying(creep: Creep) : MultiAI.ReturnType {
-		console.log("starting baseStoreIfCarrying")
+//		console.log("starting baseStoreIfCarrying")
 		if (creep.carry.energy == 0) {
 			//cannot drop off energy for the creep has none.
 			return MultiAI.ReturnType.CONTINUE
@@ -69,7 +69,7 @@ object MoveSetTarget {
 		if (target == null){
 			return MultiAI.ReturnType.CONTINUE
 		}
-
+		console.log("miningPointWithMostResouceToPickup is ${target} at ${target.pos.x} ${target.pos.y} ${target.pos.roomName}")
 		creep.memory.behaviour.targetPos = target.pos
 		return MultiAI.ReturnType.STOP
 	}

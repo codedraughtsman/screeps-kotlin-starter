@@ -76,7 +76,7 @@ fun Creep.getEnergy(fromRoom: Room = this.room, toRoom: Room = this.room): Boole
 			//console.log("c is $c")
 			//console.log("energy is ${c.unsafeCast<EnergyContainer>().energy}")
 			if (true) {
-				console.log("withdraw(c, RESOURCE_ENERGY) code ${withdraw(c, RESOURCE_ENERGY)}")
+//				console.log("withdraw(c, RESOURCE_ENERGY) code ${withdraw(c, RESOURCE_ENERGY)}")
 				if (withdraw(c, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
 					moveTo(c.pos)
 					return true

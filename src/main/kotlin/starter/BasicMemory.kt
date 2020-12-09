@@ -29,6 +29,7 @@ external interface BehaviourMemory {
 	var targetPos : RoomPosition?
 	var gotoPos : RoomPosition?
 	var sourcePos : RoomPosition?
+	var targetID: String?
 
 }
 external interface InfluenceMapsMemory {

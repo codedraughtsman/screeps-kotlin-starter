@@ -2,6 +2,7 @@ package starter
 
 import screeps.api.*
 import screeps.api.structures.StructureSpawn
+import starter.SpawingController.addParts
 import starter.multiAI.Role
 
 object SpawingController {
@@ -21,6 +22,42 @@ object SpawingController {
 		}
 		return false
 	}
+	fun bestDepositor(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
+		val mustHave = arrayOf<BodyPartConstant>(CARRY, CARRY ,MOVE)
+		var body = arrayOf<BodyPartConstant>(WORK )
+		var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+		val mustHaveCost =  mustHave.sumBy{ BODYPART_COST[it]!! }
+
+		var energyAvailable = spawn.room.energyCapacityAvailable
+		var outArray: MutableList<BodyPartConstant> = arrayListOf()
+
+		for (bodyPart in mustHave) {
+			energyAvailable -= BODYPART_COST[bodyPart]!!
+			if (energyAvailable < 0){
+				break
+			}
+			outArray.add(bodyPart)
+		}
+
+		outArray.addAll(addParts(body,energyAvailable))
+
+		return outArray.toTypedArray()
+
+	}
+
+	fun addParts(parts: Array<BodyPartConstant> , energy: Int): MutableList<BodyPartConstant> {
+		var outArray: MutableList<BodyPartConstant> = arrayListOf()
+		var energyLeft = energy
+		while (true)
+			for (bodyPart in parts) {
+				energyLeft -= BODYPART_COST[bodyPart]!!
+				if (energyLeft < 0) {
+					return outArray
+				}
+				outArray.add(bodyPart)
+			}
+		}
 	fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
 		var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
 		if (road) {

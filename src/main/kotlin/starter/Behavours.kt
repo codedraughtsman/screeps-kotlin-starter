@@ -11,7 +11,7 @@ fun Creep.behaviourGoto(): BehavourReturn {
 	}
 	var target = room.getPositionAt(memory.behaviour.gotoPos!!.x, memory.behaviour.gotoPos!!.y)
 	if (target == null) {
-		console.log("behavourGoto: target did not covert to position")
+//		console.log("behavourGoto: target did not covert to position")
 	}
 
 	if (pos == target || pos.isNearTo(target!!)) {

@@ -2,6 +2,7 @@ package starter.multiAI.Actions
 
 import screeps.api.*
 import starter.Bunker
+import starter.behaviour
 import starter.multiAI.MultiAI
 import starter.roomContainsBunker
 import starter.utils.isFlagMiningPoint
@@ -10,6 +11,25 @@ import starter.utils.*
 import starter.utils.totalResourceOnPos
 
 object InRange {
+	fun fullUpTargetCreep(creep: Creep) : MultiAI.ReturnType {
+		val target = creep.memory.behaviour.targetID
+		if (target == null){
+			//no target
+			return MultiAI.ReturnType.CONTINUE
+		}
+		val targetCreep = Game.getObjectById<Creep>(target)
+		if (targetCreep == null){
+			//no target
+			return MultiAI.ReturnType.CONTINUE
+		}
+
+		if (creep.transfer(targetCreep, RESOURCE_ENERGY)== OK) {
+			return MultiAI.ReturnType.STOP
+		}
+		return MultiAI.ReturnType.CONTINUE
+
+	}
+
 	fun depositInExtension(creep: Creep) : MultiAI.ReturnType {
 		val targets = creep.pos.findInRange(FIND_MY_STRUCTURES,1)
 				.filter { it.structureType == STRUCTURE_EXTENSION }
@@ -52,7 +72,7 @@ object InRange {
 	fun upgrade(creep: Creep) : MultiAI.ReturnType {
 		val target =
 				creep.room.controller
-		if (target == null || target.my) {
+		if (target == null || !target.my) {
 			return MultiAI.ReturnType.CONTINUE
 		}
 
@@ -64,7 +84,7 @@ object InRange {
 	}
 
 	fun depositInBaseStorage(creep: Creep) : MultiAI.ReturnType {
-		console.log("starting depositInBaseStorage")
+//		console.log("starting depositInBaseStorage")
 		if (!roomContainsBunker(creep.room)){
 			return MultiAI.ReturnType.CONTINUE
 		}
@@ -96,7 +116,7 @@ object InRange {
 	}
 
 	fun pickupResourceFree_NotOnBaseStore(creep: Creep) :MultiAI.ReturnType {
-		console.log("starting pickupResourceFree_NotOnBaseStore")
+//		console.log("starting pickupResourceFree_NotOnBaseStore")
 		val baseStorePos = Bunker(creep.room).storagePos()
 
 		if (baseStorePos == null) {
