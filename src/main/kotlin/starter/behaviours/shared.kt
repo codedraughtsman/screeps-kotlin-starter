@@ -329,7 +329,7 @@ fun Creep.behaviourDeposit(): BehavourReturn {
 fun Creep.behaviourRefillBuilders(): BehavourReturn {
 	//find the closest place to deposit energy in
 	val bunker = Bunker(room)
-	console.log("behaviourRefillBuilders: bunker stored energy is ${bunker.storedEnergy()}")
+//	console.log("behaviourRefillBuilders: bunker stored energy is ${bunker.storedEnergy()}")
 	if (bunker.storedEnergy() < room.energyCapacityAvailable *3) {
 		return BehavourReturn.CONTINUE_RUNNING
 	}

@@ -4,6 +4,7 @@ import screeps.api.*
 import screeps.api.structures.StructureSpawn
 import starter.SpawingController.addParts
 import starter.multiAI.Role
+import kotlin.math.min
 
 object SpawingController {
 	fun getNonOldCreeps(): List<Creep> {
@@ -21,6 +22,33 @@ object SpawingController {
 			return true
 		}
 		return false
+	}
+	fun bestExtractor(spawn: StructureSpawn, roadOnly :Boolean =true): Array<BodyPartConstant> {
+		var body = arrayOf<BodyPartConstant>(WORK)
+//		var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+
+
+//		var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!! - BODYPART_COST[CARRY]!!) / bodyCost
+//
+//		multiples = min(6,multiples)
+
+		var outArray: MutableList<BodyPartConstant> = arrayListOf()
+		outArray.add(MOVE)
+		outArray.add(CARRY)
+
+		val maxWork = 6
+		var energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+
+		outArray.addAll(addMultiples(energyLeft,body,min(50-outArray.size, maxWork)))
+
+		outArray.addAll(addMultiples(energyLeft, arrayOf<BodyPartConstant>(MOVE),
+				min(50-outArray.size, maxWork)))
+//
+//		while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable
+//				&& outArray.filter { it == MOVE }.size < outArray.size/2) {
+//			outArray.add(MOVE)
+//		}
+		return outArray.toTypedArray()
 	}
 	fun bestDepositor(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
 		val mustHave = arrayOf<BodyPartConstant>(CARRY, CARRY ,MOVE)
@@ -61,21 +89,24 @@ object SpawingController {
 	fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
 		var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
 		if (road) {
-			body = arrayOf<BodyPartConstant>(CARRY, CARRY, MOVE)
+			body = arrayOf<BodyPartConstant>(CARRY, CARRY, MOVE,CARRY, CARRY, MOVE,CARRY, CARRY, MOVE, WORK, MOVE)
 		}
-		var bodyCost = body.sumBy { BODYPART_COST[it]!! }
+//		var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
 
-		var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[WORK]!!) / bodyCost
+//		var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[WORK]!!) / bodyCost
 
 		var outArray: MutableList<BodyPartConstant> = arrayListOf()
 		outArray.add(WORK)
 
-		for (i in 1..multiples) {
-			for (part in body) {
-				outArray.add(part)
-			}
-		}
+//		for (i in 1..multiples) {
+//			for (part in body) {
+//				outArray.add(part)
+//			}
+//		}
+
+		var energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+		outArray.addAll(addMultiples(energyLeft,body,50-outArray.size))
 
 		return outArray.toTypedArray()
 
@@ -84,38 +115,78 @@ object SpawingController {
 		val mustHave = arrayOf<BodyPartConstant>(CARRY)
 		var body = arrayOf<BodyPartConstant>(WORK, MOVE)
 		if (road) {
-			body = arrayOf<BodyPartConstant>(WORK, WORK, MOVE)
+			body = arrayOf<BodyPartConstant>(WORK, WORK, MOVE,WORK, WORK, MOVE,WORK, WORK, MOVE,WORK, WORK,
+					MOVE, CARRY)
 		}
-		var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
-		val mustHaveCost = mustHave.sumBy{ BODYPART_COST[it]!! } *(spawn.room.energyCapacityAvailable / bodyCost)/8
+		val fillers = arrayOf<BodyPartConstant>(WORK, CARRY)
 
-		val energyInRoom = spawn.room.energyAvailable
+//		var bodyCost = body.sumBy { BODYPART_COST[it]!! }
 
-		var multiples = (spawn.room.energyCapacityAvailable - mustHaveCost) / bodyCost
+//		val mustHaveCost = mustHave.sumBy{ BODYPART_COST[it]!! } *(spawn.room.energyCapacityAvailable / bodyCost)/8
+
+//		val energyInRoom = spawn.room.energyAvailable
+//
+//		var multiples = (spawn.room.energyCapacityAvailable - mustHaveCost) / bodyCost
 
 		var outArray: MutableList<BodyPartConstant> = arrayListOf()
 
-		for (part in mustHave) {
-			outArray.add(part)
-		}
+		var energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+		outArray.addAll(addMultiples(energyLeft,mustHave,1))
 
-		for (i in 1..multiples) {
-			for (obj in body){
-				outArray.add(obj)
+		energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+		outArray.addAll(addMultiples(energyLeft,body,50 - outArray.size))
+
+		energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+		outArray.addAll(addMultiples(energyLeft,fillers,50 - outArray.size))
+
+//		for (part in mustHave) {
+//			outArray.add(part)
+//		}
+
+//		for (i in 1..multiples) {
+//			for (obj in body){
+//				outArray.add(obj)
+//			}
+//		}
+//
+//		for (fillPart in fillers) {
+//			var fillCost = BODYPART_COST[fillPart]!!
+//
+//			while (outArray.sumBy { BODYPART_COST[it]!! } + fillCost <= spawn.room.energyCapacityAvailable) {
+//				outArray.add(fillPart)
+//			}
+//		}
+
+		return outArray.toTypedArray()
+
+	}
+
+
+	fun addMultiples(energy:Int, body: Array<BodyPartConstant>, maxNumberOfBodyParts:Int =50): Array<BodyPartConstant> {
+
+		var energyLeft = energy
+		var outArray: MutableList<BodyPartConstant> = arrayListOf()
+
+		var i=0
+		while (energyLeft> 0 && outArray.size < maxNumberOfBodyParts ){
+			val bodyPart = body.get(i%body.size)
+			i ++
+			val cost = BODYPART_COST[bodyPart]
+			if (cost == null) {
+				console.log("tried to add an invalid body part ${bodyPart} in function addMultiples")
 			}
-		}
-		val fillers = arrayOf<BodyPartConstant>(WORK, CARRY)
-		for (fillPart in fillers) {
-			var fillCost = BODYPART_COST[fillPart]!!
+			else if (energyLeft < cost) {
+			}
+			else if (outArray.size >= maxNumberOfBodyParts ) {
+			} else {
+				outArray.add(bodyPart)
+				energyLeft -= cost
 
-			while (outArray.sumBy { BODYPART_COST[it]!! } + fillCost <= spawn.room.energyCapacityAvailable) {
-				outArray.add(fillPart)
 			}
 		}
 
 		return outArray.toTypedArray()
-
 	}
 
 	fun bestHaulerBase(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
@@ -134,6 +205,12 @@ object SpawingController {
 		for (i in 1..multiples) {
 			for (part in body) {
 				outArray.add(part)
+				if (outArray.size >=50) {
+					break;
+				}
+			}
+			if (outArray.size >=50) {
+				break;
 			}
 		}
 

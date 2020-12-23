@@ -15,15 +15,21 @@ object MultiAI {
 
 	fun update(){
 		for (creep in Game.creeps.values) {
-			var role = creep.memory.role
+			try {
 
-			if (!roleMap.containsKey(role)){
-				//call old ai.
-				creep.runBehaviour()
-				continue
+
+				var role = creep.memory.role
+
+				if (!roleMap.containsKey(role)) {
+					//call old ai.
+					creep.runBehaviour()
+					continue
+				}
+
+				roleMap[role]!!.run(creep)
+			} catch (t: Throwable){
+
 			}
-
-			roleMap[role]!!.run(creep)
 		}
 	}
 }

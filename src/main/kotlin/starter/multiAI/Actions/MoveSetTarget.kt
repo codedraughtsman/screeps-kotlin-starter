@@ -42,7 +42,7 @@ object MoveSetTarget {
 	}
 	fun baseStoreIfCarrying(creep: Creep) : MultiAI.ReturnType {
 //		console.log("starting baseStoreIfCarrying")
-		if (creep.carry.energy == 0) {
+		if (creep.carry.values.sum() == 0) {
 			//cannot drop off energy for the creep has none.
 			return MultiAI.ReturnType.CONTINUE
 		}
@@ -63,8 +63,12 @@ object MoveSetTarget {
 
 	fun miningPointWithMostResouceToPickup(creep: Creep) : MultiAI.ReturnType {
 		var miningFlags = getMiningPoints()
-				.sortedByDescending { energyToBePickedUpAtPoint(it.pos, Role.HAULER_EXTRACTOR) }
-
+				.filter { resourceToBePickedUpAtPoint(it.pos, Role.HAULER_EXTRACTOR) > 0 }
+				.sortedByDescending { resourceToBePickedUpAtPoint(it.pos, Role.HAULER_EXTRACTOR) }
+		console.log("sorted mining flags ${miningFlags}")
+		for (flag in miningFlags) {
+			console.log("flag ${flag} is ${resourceToBePickedUpAtPoint(flag.pos, Role.HAULER_EXTRACTOR)}")
+		}
 		val target = miningFlags.firstOrNull()
 		if (target == null){
 			return MultiAI.ReturnType.CONTINUE

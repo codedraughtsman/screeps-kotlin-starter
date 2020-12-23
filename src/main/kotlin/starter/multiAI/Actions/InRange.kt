@@ -4,6 +4,8 @@ import screeps.api.*
 import starter.Bunker
 import starter.behaviour
 import starter.multiAI.MultiAI
+import starter.multiAI.Role
+import starter.role
 import starter.roomContainsBunker
 import starter.utils.isFlagMiningPoint
 import starter.utils.pickUpResourceOnPos_Free
@@ -11,6 +13,16 @@ import starter.utils.*
 import starter.utils.totalResourceOnPos
 
 object InRange {
+	fun attack(creep: Creep) : MultiAI.ReturnType {
+		var targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3)
+				.sortedBy { it.hits }
+		for (target in targets) {
+			if (creep.attack(target) == OK) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
+		return MultiAI.ReturnType.CONTINUE
+	}
 	fun fullUpTargetCreep(creep: Creep) : MultiAI.ReturnType {
 		val target = creep.memory.behaviour.targetID
 		if (target == null){
@@ -30,6 +42,31 @@ object InRange {
 
 	}
 
+	fun depositInUpgraderCreep(creep: Creep) : MultiAI.ReturnType {
+		val targets = creep.pos.findInRange(FIND_MY_CREEPS,1)
+				.filter { it.memory.role == Role.UPGRADER }
+				.sortedBy {it.carry.energy }
+
+		for (target in targets) {
+			if (creep.transfer(target, RESOURCE_ENERGY) == OK) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
+		return MultiAI.ReturnType.CONTINUE
+	}
+
+	fun depositInTower(creep: Creep) : MultiAI.ReturnType {
+		val targets = creep.pos.findInRange(FIND_MY_STRUCTURES,1)
+				.filter { it.structureType == STRUCTURE_TOWER }
+
+		for (target in targets) {
+			if (depositEnergy(creep,target.pos)) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
+		return MultiAI.ReturnType.CONTINUE
+	}
+
 	fun depositInExtension(creep: Creep) : MultiAI.ReturnType {
 		val targets = creep.pos.findInRange(FIND_MY_STRUCTURES,1)
 				.filter { it.structureType == STRUCTURE_EXTENSION }
@@ -41,13 +78,23 @@ object InRange {
 		}
 		return MultiAI.ReturnType.CONTINUE
 	}
+	fun repairNotWallsOrRamparts(creep: Creep) : MultiAI.ReturnType{
+		return repairCore(creep, includeWalls=false, includeRamparts=false)
+	}
+	fun repair(creep: Creep) : MultiAI.ReturnType{
+		return repairCore(creep)
+	}
 
-	fun repair(creep: Creep) : MultiAI.ReturnType {
+	fun repairCore(creep: Creep, includeWalls: Boolean = true, includeRamparts: Boolean=true) : MultiAI.ReturnType {
 		val targets =
 				creep.pos.findInRange(FIND_STRUCTURES, 3)
 						.filter { it.hits != it.hitsMax }
+						.filter {includeWalls or (it.structureType != STRUCTURE_WALL)}
+						.filter {includeRamparts or (it.structureType != STRUCTURE_RAMPART)}
 						.sortedBy { (1000 *it.hitsMax) - (1000 *it.hits)}
-
+		if ( creep.memory.role == Role.EXTRACTOR) {
+			console.log("${creep.pos} ${creep.memory.role} ${targets}")
+		}
 //				.sortByDescending { (it.progress *1000) / (it.progressTotal *1000) }
 		for (target in targets) {
 			if (creep.repair(target) == OK) {
@@ -149,6 +196,24 @@ object InRange {
 
 	fun pickupEnergyNotOnMiningPos(creep: Creep): MultiAI.ReturnType {
 		//TODO
+		return MultiAI.ReturnType.CONTINUE
+	}
+
+	fun pickupResouceOnMiningPos(creep: Creep) : MultiAI.ReturnType {
+		val miningPointFlags = creep.pos.findInRange(FIND_FLAGS,1)
+				.filter { isFlagMiningPoint(it) }
+
+		for (flag in miningPointFlags) {
+
+			if (pickUpResourceOnPos_Free(creep, flag.pos)) {
+				return MultiAI.ReturnType.STOP
+			}
+
+			if (pickUpResourceOnPos_Stored(creep, flag.pos)) {
+				return MultiAI.ReturnType.STOP
+			}
+		}
+
 		return MultiAI.ReturnType.CONTINUE
 	}
 

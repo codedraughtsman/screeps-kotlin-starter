@@ -13,10 +13,29 @@ enum class Role {
 	HAULER_EXTRACTOR,
 	HAULER_BASE,
 	HAULER_CREEP,
-	RESCUE_BOT
+	RESCUE_BOT,
+	ATTACKER
 }
 
 var roleMap : Map<Role,MultiAI_Action> = mapOf(
+		Role.ATTACKER to  MultiAI_Action(arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
+				Attacker::Attacker
+		),
+				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
+						InRange::attack
+
+				)),
+//		Role.HAULER_BASE to  MultiAI_Action(arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
+//				HaulerBase::haulerBase
+//		),
+//				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
+//						InRange::pickupResourceFree,
+//						InRange::pickupStoredEnergy,
+//						InRange::depositInExtension,
+//						InRange::depositInTower,
+//						InRange::depositInUpgraderCreep,
+//						InRange::fullUpTargetCreep
+//				)),
 		Role.HAULER_CREEP to MultiAI_Action(
 				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
 						HaulerCreep::haulerCreep
@@ -25,6 +44,7 @@ var roleMap : Map<Role,MultiAI_Action> = mapOf(
 						InRange::pickupResourceFree,
 						InRange::pickupStoredEnergy,
 						InRange::depositInExtension,
+						InRange::depositInUpgraderCreep,
 						InRange::fullUpTargetCreep
 				)),
 
@@ -33,9 +53,12 @@ var roleMap : Map<Role,MultiAI_Action> = mapOf(
 					Extractor::extractor
 						),
 				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
-						InRange::pickupEnergyNotOnMiningPos,
+//						InRange::pickupEnergyNotOnMiningPos,
+						InRange::build,
+						InRange::repairNotWallsOrRamparts,
 						Misc::dropResouceOnMiningPoint,
-						InRange::mine
+						InRange::mine,
+						InRange::pickupEnergyOnMiningPos //only do this if it cannot mine
 				)),
 
 		Role.BUILDER to MultiAI_Action(
@@ -44,7 +67,7 @@ var roleMap : Map<Role,MultiAI_Action> = mapOf(
 				),
 				arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
 						InRange::build,
-//						InRange::repair,
+						InRange::repair,
 						InRange::upgrade,
 						InRange::pickupResourceFree,
 						InRange::pickupStoredEnergy
@@ -72,10 +95,12 @@ var roleMap : Map<Role,MultiAI_Action> = mapOf(
 				ExtractorHauler::hauler
 				),
 		arrayOf<(creep: Creep) -> MultiAI.ReturnType>(
-				InRange::pickupEnergyOnMiningPos,
+				InRange::pickupResouceOnMiningPos,
 				InRange::pickupResourceFree_NotOnBaseStore,
 				InRange::depositInBaseStorage, //also need to clear target pos when doing this
 				InRange::depositInExtension,
+				InRange::depositInTower,
+				InRange::depositInUpgraderCreep,
 				InRange::build,
 				InRange::repair
 		))

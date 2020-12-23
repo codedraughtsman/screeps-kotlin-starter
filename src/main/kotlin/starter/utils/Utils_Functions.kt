@@ -6,9 +6,7 @@ import screeps.api.structures.StructureContainer
 import screeps.api.structures.StructureStorage
 import starter.Bunker
 import starter.behaviour
-import starter.behaviours.depositEnergyAt
 import starter.behaviours.loadPosFromMemory
-import starter.bunker
 import starter.multiAI.Role
 import starter.role
 
@@ -21,7 +19,26 @@ fun getMiningPoints(): List<Flag> {
 
 
 fun energyOnPos (pos: RoomPosition) : Int {
-	return 0
+	try {
+		var energy = 0
+
+		var dropped = pos.findInRange(FIND_DROPPED_RESOURCES, 0)
+		for (drop in dropped) {
+			if (drop.resourceType == RESOURCE_ENERGY) {
+				energy += drop.amount
+			}
+		}
+
+		var containers = pos.findInRange(FIND_STRUCTURES, 0)
+				.filter { it.structureType == STRUCTURE_CONTAINER }
+		for (container in containers) {
+			val cast = container as StructureContainer
+			energy += cast.store.energy
+		}
+		return energy
+	}catch (t: Throwable) {
+		return 0
+	}
 }
 
 
@@ -67,50 +84,62 @@ fun targetPosIsEqualTo(creep: Creep, pos: RoomPosition) :Boolean {
 	return (pos.isEqualTo(targetPos!!))
 }
 
-//TODO rename this to a better name.
-fun energyToBePickedUpAtPoint(pos: RoomPosition, role: Role) : Int {
-	var energyAtPoint = energyOnPos(pos)
+fun resourceToBePickedUpAtPoint(pos: RoomPosition, role: Role) : Int {
+	var resouceAtPoint = totalResourceOnPos(pos)
 
 	val creeps = Game.creeps.values
 			.filter { it.memory.role == role }
 			.filter { targetPosIsEqualTo(it, pos) }
 
 	for (creep in creeps) {
-		energyAtPoint -= creep.carryCapacity
+		resouceAtPoint -= creep.carryCapacity
 	}
 
-	return energyAtPoint
+	return resouceAtPoint
 }
+
 
 fun isMiningPoint(pos: RoomPosition) : Boolean {
 	val flags = pos.findInRange(FIND_FLAGS,0)
 			.filter { isFlagMiningPoint(it) }
 	return !flags.isNullOrEmpty()
 }
+fun resourceInStorage(store: StoreDefinition, resourceType: ResourceConstant?): Int {
+	if (resourceType==null) {
+		return store.values.sum ()
+	}
+	val total = store.get(resourceType)
+	if (total == null) {
+		return 0
+	}
+	return total
+}
 
 fun isFlagMiningPoint(flag :Flag) : Boolean{
 	return flag.name.contains("extractor")
 }
 
-fun totalResourceOnPos(pos: RoomPosition, resourceType: ResourceConstant) : Int {
+fun totalResourceOnPos(pos: RoomPosition, resourceType: ResourceConstant? =null) : Int {
 
 	var totalEnergy : Int = 0
 
-	val freeResouce = pos.findInRange(FIND_DROPPED_RESOURCES,0).
-			filter { it.resourceType == resourceType }
+	var freeResouce: List<Resource> = pos.findInRange(FIND_DROPPED_RESOURCES,0).toList()
+	if (resourceType != null) {
+		freeResouce = freeResouce.filter { it.resourceType == resourceType }
+	}
 
 	totalEnergy += freeResouce.sumBy { it.amount }
 
 	//next tombstones
-	val containerResouce : Int =  pos.findInRange(FIND_STRUCTURES,0).
+	val containerResource : Int =  pos.findInRange(FIND_STRUCTURES,0).
 			filter { it.structureType == STRUCTURE_CONTAINER }
-			.sumBy { val s = it as StructureContainer; s.store.energy }
+			.sumBy { val s = it as StructureContainer; resourceInStorage(s.store,resourceType) }
 
-	totalEnergy += containerResouce
+	totalEnergy += containerResource
 
 	val storageResouce =  pos.findInRange(FIND_STRUCTURES,0).
 			filter { it.structureType == STRUCTURE_STORAGE }
-			.sumBy { val s = it as StructureStorage; s.store.energy }
+			.sumBy { val s = it as StructureStorage; resourceInStorage(s.store, resourceType) }
 
 	totalEnergy += storageResouce
 
@@ -118,7 +147,7 @@ fun totalResourceOnPos(pos: RoomPosition, resourceType: ResourceConstant) : Int 
 	return totalEnergy
 }
 
-fun pickUpResourceOnPos_Free(creep: Creep, pos: RoomPosition, resourceType: ResourceConstant) : Boolean {
+fun pickUpResourceOnPos_Free(creep: Creep, pos: RoomPosition, resourceType: ResourceConstant? = null) : Boolean {
 	var resources = pos.findInRange(FIND_DROPPED_RESOURCES,1)
 			.filter { it.resourceType == resourceType }
 			.sortedByDescending { it.amount }
@@ -132,27 +161,50 @@ fun pickUpResourceOnPos_Free(creep: Creep, pos: RoomPosition, resourceType: Reso
 	return false
 }
 
-fun pickUpResourceOnPos_Stored(creep: Creep, pos: RoomPosition, resourceType: ResourceConstant ) : Boolean {
+fun pickUpResourceOnPos_Stored(creep: Creep, pos: RoomPosition, resourceType: ResourceConstant?=null ) : Boolean {
 
 	var stores = pos.findInRange(FIND_STRUCTURES,1)
 			.filter { it.structureType == STRUCTURE_STORAGE}
-			.filter { var s = it as StructureStorage; s.store.energy > 0 }
-			.sortedByDescending { var s = it as StructureStorage; s.store.energy }
-
+			.filter { var s = it as StructureStorage; resourceInStorage(s.store, resourceType) > 0 }
+			.sortedByDescending { var s = it as StructureStorage; resourceInStorage(s.store, resourceType) > 0 }
+//	console.log("stores found are ${stores} at ${creep.pos}")
 	for (store in stores) {
-		if (creep.withdraw(store, resourceType) == OK) {
-			return true
+		if (resourceType != null) {
+			if (creep.withdraw(store, resourceType) == OK) {
+				return true
+			}
+		} else {
+			val cast: StructureStorage = stores as StructureStorage
+			console.log("store has ${cast.store.values}")
+			for (withdrawalType in cast.store.keys) {
+				if (creep.withdraw(store, withdrawalType) == OK) {
+					return true
+				}
+
+			}
 		}
 	}
 
+
 	var containers = pos.findInRange(FIND_STRUCTURES,1)
 			.filter { it.structureType == STRUCTURE_CONTAINER}
-			.filter { var s = it as StructureContainer; s.store.energy > 0 }
-			.sortedByDescending { var s = it as StructureContainer; s.store.energy }
+			.filter { var s = it as StructureContainer; resourceInStorage(s.store, resourceType)  > 0 }
+			.sortedByDescending { var s = it as StructureContainer; resourceInStorage(s.store, resourceType)  }
+	console.log("containers found are ${stores} at ${creep.pos}")
+	for (target in containers) {
+		if (resourceType != null) {
+			if (creep.withdraw(target, resourceType) == OK) {
+				return true
+			}
+		} else {
+			val cast: StructureContainer = target as StructureContainer
+			console.log("store has ${cast.store.values}")
+			for (withdrawalType in cast.store.keys) {
+				if (creep.withdraw(target, withdrawalType) == OK) {
+					return true
+				}
 
-	for (container in containers) {
-		if (creep.withdraw(container, resourceType) == OK) {
-			return true
+			}
 		}
 	}
 

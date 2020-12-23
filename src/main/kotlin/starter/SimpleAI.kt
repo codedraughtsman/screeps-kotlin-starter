@@ -44,59 +44,9 @@ fun gameLoop() {
 	}
 }
 
-private fun bestWorker(spawn: StructureSpawn): Array<BodyPartConstant> {
-	var body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
-	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
-
-	var multiples = spawn.room.energyCapacityAvailable / bodyCost
-
-//	console.log("bodyCost $bodyCost, multiples $multiples")
-
-
-	var outArray: MutableList<BodyPartConstant> = arrayListOf()
-
-
-	for (i in 1..multiples) {
-		outArray.add(WORK)
-	}
-	for (i in 1..multiples) {
-		outArray.add(CARRY)
-	}
-	for (i in 1..multiples) {
-		outArray.add(MOVE)
-	}
-
-	while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable) {
-		outArray.add(MOVE)
-	}
-	return outArray.toTypedArray()
-
-}
 
 
 
-private fun bestExtractor(spawn: StructureSpawn, roadOnly :Boolean =true): Array<BodyPartConstant> {
-	var body = arrayOf<BodyPartConstant>(WORK)
-	var bodyCost = body.sumBy { BODYPART_COST[it]!! }
-
-
-	var multiples = (spawn.room.energyCapacityAvailable - BODYPART_COST[MOVE]!! - BODYPART_COST[CARRY]!!) / bodyCost
-
-	multiples = min(6,multiples)
-
-	var outArray: MutableList<BodyPartConstant> = arrayListOf()
-	outArray.add(MOVE)
-	outArray.add(CARRY)
-
-	for (i in 1..multiples) {
-		outArray.add(WORK)
-	}
-	while (outArray.sumBy { BODYPART_COST[it]!! } + BODYPART_COST[MOVE]!! <= spawn.room.energyCapacityAvailable
-			&& outArray.filter { it == MOVE }.size < outArray.size/2) {
-		outArray.add(MOVE)
-	}
-	return outArray.toTypedArray()
-}
 
 
 
@@ -117,8 +67,9 @@ private fun spawnCreeps(
 		}
 		return
 	}
-	if (creeps.count() == 0 || creeps.count {it.memory.role == Role.HAULER_EXTRACTOR } ==0
-			|| creeps.count {it.memory.role == Role.EXTRACTOR } ==0
+	if (creeps.count() == 0
+//			|| creeps.count {it.memory.role == Role.HAULER_EXTRACTOR } ==0
+//			|| creeps.count {it.memory.role == Role.EXTRACTOR } ==0
 			|| creeps.count {it.memory.role == Role.HAULER_BASE } ==0 ) {
 		//restart bot
 		if (creeps.count { it.memory.role == Role.RESCUE_BOT } == 0) {
@@ -143,7 +94,7 @@ private fun spawnCreeps(
 
 	val numberOfExtractorFlags = Game.flags.values.filter { it.name.startsWith("extractor", true) }.count()
 	if ( nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }  < numberOfExtractorFlags) {
-		mySpawnCreeps(spawn, Role.EXTRACTOR, bestExtractor(spawn))
+		mySpawnCreeps(spawn, Role.EXTRACTOR, SpawingController.bestExtractor(spawn))
 		return
 	}
 
@@ -159,16 +110,16 @@ private fun spawnCreeps(
 		//depositor spawn
 		val depoitorFlagCount = spawn.room.find(FIND_FLAGS)
 				.filter{it.name.contains("depositor")}.count()
-
-		if (creeps.count { it.memory.role == Role.UPGRADER } < depoitorFlagCount) {
-			mySpawnCreeps(spawn, Role.UPGRADER, SpawingController.bestDepositor(spawn))
-			return
-		}
-
-		if (creeps.count { it.memory.role == Role.UPGRADER } > creeps.count { it.memory.role == Role.HAULER_CREEP }) {
-			mySpawnCreeps(spawn, Role.HAULER_CREEP, SpawingController.bestHauler(spawn))
-			return
-		}
+//
+//		if (creeps.count { it.memory.role == Role.UPGRADER } < depoitorFlagCount) {
+//			mySpawnCreeps(spawn, Role.UPGRADER, SpawingController.bestDepositor(spawn))
+//			return
+//		}
+//
+//		if (creeps.count { it.memory.role == Role.UPGRADER } > creeps.count { it.memory.role == Role.HAULER_CREEP }) {
+//			mySpawnCreeps(spawn, Role.HAULER_CREEP, SpawingController.bestHauler(spawn))
+//			return
+//		}
 	}
 
 
@@ -179,12 +130,13 @@ fun mySpawnCreeps(spawn: StructureSpawn, role: Role, body: Array<BodyPartConstan
 	val code = spawn.spawnCreep(body, newName, options {
 		memory = jsObject<CreepMemory> { this.role = role }
 	})
-
-	when (code) {
-		OK -> console.log("spawning $newName with body $body")
-		ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
-		else -> console.log("unhandled error code $code")
+	if (code == OK) {
+		console.log("spawning $newName with body $body")
+	} else {
+		console.log("unhandled error when spawning creep code $code, body $body, name $newName")
+		console.log("number of parts ${body.size}")
 	}
+
 }
 
 private fun houseKeeping(creeps: Record<String, Creep>) {

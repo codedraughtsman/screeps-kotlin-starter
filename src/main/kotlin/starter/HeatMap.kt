@@ -34,12 +34,12 @@ fun Room.updateHeatmap() {
 					&& memory.heat.map[creep.pos.x][creep.pos.y] > 30){
 
 				createConstructionSite(creep.pos, STRUCTURE_ROAD)
-				console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
+//				console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
 
 			} else { //there is no controller
 				if ( memory.heat.map[creep.pos.x][creep.pos.y] > 30){
 					createConstructionSite(creep.pos, STRUCTURE_ROAD)
-					console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
+//					console.log( "heatmap creating road at value ${creep.pos} is ${memory.heat.map[creep.pos.x][creep.pos.y]}")
 				}
 			}
 		}

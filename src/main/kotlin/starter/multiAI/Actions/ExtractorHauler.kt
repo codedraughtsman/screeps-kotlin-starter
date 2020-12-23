@@ -9,10 +9,13 @@ import starter.utils.getTargetPos
 object ExtractorHauler {
 	fun hauler(creep: Creep): MultiAI.ReturnType {
 		var target = getTargetPos(creep)
+		console.log("calling ExtractorHauler.hauler")
 		if (target == null) {
+			console.log("target is null")
 			if (creep.carry.values.sum() > 0) {
 				MoveSetTarget.baseStoreIfCarrying(creep)
 			} else {
+				console.log("calling miningPointWithMostResouceToPickup")
 				MoveSetTarget.miningPointWithMostResouceToPickup(creep)
 			}
 			target = getTargetPos(creep)!!;
