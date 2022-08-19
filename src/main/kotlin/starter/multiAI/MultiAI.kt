@@ -17,11 +17,12 @@ object MultiAI {
 		for (creep in Game.creeps.values) {
 			try {
 
-
+//				console.log("running creep:${creep.memory.role}")
 				var role = creep.memory.role
 
 				if (!roleMap.containsKey(role)) {
 					//call old ai.
+//					console.log("calling old behaviour for creep ${creep} with role ${role}")
 					creep.runBehaviour()
 					continue
 				}

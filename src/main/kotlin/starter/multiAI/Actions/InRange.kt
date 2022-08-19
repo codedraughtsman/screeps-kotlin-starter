@@ -13,6 +13,17 @@ import starter.utils.*
 import starter.utils.totalResourceOnPos
 
 object InRange {
+	fun claimRoom(creep: Creep) : MultiAI.ReturnType {
+		var target = creep.room.controller
+		if (target == null) {
+			return MultiAI.ReturnType.CONTINUE
+		}
+		if (creep.claimController(target) == OK) {
+			return MultiAI.ReturnType.STOP
+		}
+
+		return MultiAI.ReturnType.CONTINUE
+	}
 	fun attack(creep: Creep) : MultiAI.ReturnType {
 		var targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3)
 				.sortedBy { it.hits }

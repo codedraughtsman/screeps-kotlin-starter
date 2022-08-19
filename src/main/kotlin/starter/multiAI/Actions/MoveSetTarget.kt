@@ -62,6 +62,7 @@ object MoveSetTarget {
 	}
 
 	fun miningPointWithMostResouceToPickup(creep: Creep) : MultiAI.ReturnType {
+		console.log("calling miningPointWithMostResouceToPickup")
 		var miningFlags = getMiningPoints()
 				.filter { resourceToBePickedUpAtPoint(it.pos, Role.HAULER_EXTRACTOR) > 0 }
 				.sortedByDescending { resourceToBePickedUpAtPoint(it.pos, Role.HAULER_EXTRACTOR) }

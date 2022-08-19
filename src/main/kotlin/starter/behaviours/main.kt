@@ -43,8 +43,9 @@ fun Creep.runBehaviour() {
 	updateIsCollectingEnergy()
 	globalBehavour()
 	var behavours = getBehavioursForRole(memory.role as Role)
-
+	console.log("behavours for creep ${name} are ${behavours}")
 		for (behaviour in behavours) {
+			console.log("creep ${name} is running behaviour ${behaviour}")
 			val isFinshed = runTheBehaviour(behaviour)
 			if (isFinshed == BehavourReturn.STOP_RUNNING) {
 				break

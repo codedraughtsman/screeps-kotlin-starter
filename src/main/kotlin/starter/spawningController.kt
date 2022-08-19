@@ -16,8 +16,10 @@ object SpawingController {
 		val energyProduced= 0
 		val hauldistance=0
 
+		console.log("there are ${nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }} extractors and ${nonOldCreeps.count { it.memory.role == Role.HAULER_EXTRACTOR }} haulers")
 
-		if ( nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }-2  > nonOldCreeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
+		if ( nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }  > nonOldCreeps.count { it.memory.role == Role.HAULER_EXTRACTOR }) {
+//			console.log("there are ${nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }} extractors and ${nonOldCreeps.count { it.memory.role == Role.HAULER_EXTRACTOR }} haulers")
 			mySpawnCreeps(spawn, Role.HAULER_EXTRACTOR, bestHauler(spawn,spawn.room.controller!!.level >= 3))
 			return true
 		}
@@ -34,10 +36,10 @@ object SpawingController {
 		var energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
 
 		outArray.addAll(addMultiples(energyLeft,body,min(50-outArray.size, maxWork)))
-
+		energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
 		outArray.addAll(addMultiples(energyLeft, arrayOf<BodyPartConstant>(MOVE),
 				min(50-outArray.size, maxWork)))
-
+		console.log("got best extractor body")
 		return outArray.toTypedArray()
 	}
 	fun bestDepositor(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
@@ -74,6 +76,21 @@ object SpawingController {
 				outArray.add(bodyPart)
 			}
 		}
+
+	fun bestAttacker(spawn: StructureSpawn): Array<BodyPartConstant> {
+		var body = arrayOf<BodyPartConstant>(ATTACK, MOVE)
+
+		var outArray: MutableList<BodyPartConstant> = arrayListOf()
+
+
+		var energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+		outArray.addAll(addMultiples(energyLeft,body,50-outArray.size))
+
+		return outArray.toTypedArray()
+
+	}
+
+
 	fun bestHauler(spawn: StructureSpawn, road :Boolean =true): Array<BodyPartConstant> {
 		var body = arrayOf<BodyPartConstant>(CARRY, MOVE)
 		if (road) {
@@ -127,6 +144,7 @@ object SpawingController {
 
 		var i=0
 		while (energyLeft> 0 && outArray.size < maxNumberOfBodyParts ){
+
 			val bodyPart = body.get(i%body.size)
 			i ++
 			val cost = BODYPART_COST[bodyPart]
@@ -134,6 +152,7 @@ object SpawingController {
 				console.log("tried to add an invalid body part ${bodyPart} in function addMultiples")
 			}
 			else if (energyLeft < cost) {
+				break
 			}
 			else if (outArray.size >= maxNumberOfBodyParts ) {
 			} else {
@@ -173,5 +192,17 @@ object SpawingController {
 
 		return outArray.toTypedArray()
 
+	}
+
+	fun bestClaimer(spawn: StructureSpawn): Array<BodyPartConstant> {
+			var body = arrayOf<BodyPartConstant>(CLAIM, MOVE)
+
+			var outArray: MutableList<BodyPartConstant> = arrayListOf()
+
+
+			var energyLeft = spawn.room.energyCapacityAvailable -outArray.sumBy { BODYPART_COST[it]!! }
+			outArray.addAll(addMultiples(energyLeft,body,2))
+
+			return outArray.toTypedArray()
 	}
 }

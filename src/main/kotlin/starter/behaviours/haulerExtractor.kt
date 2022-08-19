@@ -103,6 +103,7 @@ fun Creep.behavourFillUpAdjcentExtentions() : Boolean {
 }
 
 fun Creep.behaviourHaulerPickup(): BehavourReturn {
+	console.log("calling behaviourHaulerPickup with creep ${this.name}")
 	if (!isHarvesting()){
 		return BehavourReturn.CONTINUE_RUNNING
 	}

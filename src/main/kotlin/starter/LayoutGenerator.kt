@@ -50,15 +50,18 @@ private fun Room.clearAllLayoutFlags() {
 }
 
 	fun Room.initLayout() {
+		console.log("init layout is being called")
 		if (controller == null) {
 			return
 		}
 
 		val forceReset = commandFlag("initroom")
 		if (forceReset) {
-//		console.log("force reseting room")
+			console.log("force reseting room")
+			memory.isRoomInited = false
 		}
-		if (!memory.isRoomInited || forceReset == true) {
+		if (!memory.isRoomInited ) {
+
 			//reset data
 			memory.bunker.mainStorePos = null
 			memory.layoutRoadsToSourcesHaveBeenGenerated = false
@@ -72,6 +75,7 @@ private fun Room.clearAllLayoutFlags() {
 			memory.isRoomInited = true
 			return
 		}
+		console.log("layoutInitMainBaseFlag is being called")
 		layoutInitMainBaseFlag()
 
 		if (memory.bunker.mainStorePos == null) {
@@ -276,6 +280,7 @@ every time the CL changes, we want to build new structures.
 
 		if (memory.bunker.mainStorePos != null && memory.bunker.mainStoreId != "") {
 			//all set up
+			console.log("bunker main store pos is already set, not going to layout main base flag. ${memory.bunker.mainStorePos}")
 			return
 		}
 
@@ -284,6 +289,8 @@ every time the CL changes, we want to build new structures.
 			memory.bunker.mainStoreId = flags[0].name
 			memory.bunker.mainStorePos = flags[0].pos
 			console.log("findMainBaseFlag: set base flag to ${memory.bunker.mainStorePos}")
+		} else {
+			console.log("main store flag is already present")
 		}
 	}
 

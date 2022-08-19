@@ -15,10 +15,10 @@ fun findNearestFreeExtractorFlag(creep: Creep, creepRole: Role): RoomPosition? {
 		return creep.pos
 	}
 
-//	val flagPositions = creep.room.find(FIND_FLAGS)
-//			.filter { it.name.startsWith("extractor", true) }
-	val flagPositions = Game.flags.values
+	val flagPositions = creep.room.find(FIND_FLAGS)
 			.filter { it.name.startsWith("extractor", true) }
+//	val flagPositions = Game.flags.values
+//			.filter { it.name.startsWith("extractor", true) }
 	//.sortedByDescending { creep.pos.get }
 
 	if (flagPositions.isNullOrEmpty()) {

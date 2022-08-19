@@ -15,6 +15,10 @@ fun getMiningPoints(): List<Flag> {
 	return Game.flags.values.filter { it.name.contains("extractor") }
 }
 
+fun getControllerClaimFlags(): List<Flag> {
+	return Game.flags.values.filter { it.name.contains("claimroom") }
+			.filter { it.room?.controller != null && it.room!!.controller?.my ?: false }
+}
 
 
 
