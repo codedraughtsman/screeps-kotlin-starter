@@ -10,6 +10,8 @@ fun loadPosFromMemory(targetPos: RoomPosition): RoomPosition {
 	return RoomPosition(targetPos!!.x, targetPos!!.y, targetPos!!.roomName)
 }
 
+
+
 private fun displayErrorCode(errorCode: ScreepsReturnCode, msg: String = "") {
 	if (errorCode != OK) {
 		console.log("got ${errorCode} error code for ${msg}")

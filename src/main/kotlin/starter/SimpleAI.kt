@@ -8,6 +8,7 @@ import screeps.utils.contains
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
+import starter.AI.updateAI
 import kotlin.math.min
 import starter.behaviours.runBehaviour
 import starter.behaviours.updateTower
@@ -36,35 +37,39 @@ fun clearOldFlags(){
 }
 
 fun gameLoop() {
+	console.log()
+	console.log("/n starting a new game loop######")
 //	val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
 	clearOldFlags()
 	//delete memories of creeps that have passed away
-	console.log("updating housekeeping")
+//	console.log("updating housekeeping")
 	houseKeeping(Game.creeps)
 	val numberOfExtractorFlags = Game.flags.values.filter { it.name.startsWith("extractor", true) }.count()
 	val nonOldCreeps = Game.creeps.values.filter { it.ticksToLive > 300  }.toMutableList()
-	console.log("extractor flags are ${Game.flags.values.filter { it.name.startsWith("extractor", true) }}")
-	console.log("number of extractor flags are ${numberOfExtractorFlags} and ${nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }} extractors")
-
-	console.log("updating spawing creeps")
+//	console.log("extractor flags are ${Game.flags.values.filter { it.name.startsWith("extractor", true) }}")
+//	console.log("number of extractor flags are ${numberOfExtractorFlags} and ${nonOldCreeps.count { it.memory.role == Role.EXTRACTOR }} extractors")
+//
+//	console.log("updating spawing creeps")
 	for (spawn in Game.spawns.values) {
 		spawnCreeps(Game.creeps.values, spawn)
 		break
 	}
-	console.log("updating ai")
+//	console.log("updating ai")
 
-	MultiAI.update()
-	console.log("updating room")
+//	MultiAI.update()
+	updateAI(Game.creeps)
+
+//	console.log("updating room")
 	for ((_, room) in Game.rooms) {
 		room.update()
 	}
 
-	console.log("updating structures")
+//	console.log("updating structures")
 	for (structure in Game.structures.values.filter { it-> it.structureType == STRUCTURE_TOWER }) {
 		val tower: StructureTower = structure.unsafeCast<StructureTower>()
 		updateTower(tower)
 	}
-	console.log("end of gameloop")
+//	console.log("end of gameloop")
 }
 
 
